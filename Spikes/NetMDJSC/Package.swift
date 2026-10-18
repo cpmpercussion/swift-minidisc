@@ -10,6 +10,7 @@ let package = Package(
         .library(name: "NetMDJSC", targets: ["NetMDJSC"]),
         .executable(name: "netmd-jsc-spike", targets: ["netmd-jsc-spike"]),
     ],
+    dependencies: [.package(name: "swift-minidisc", path: "../..")],
     targets: [
         .target(
             name: "NetMDJSC",
@@ -24,7 +25,10 @@ let package = Package(
                 .linkedFramework("IOUSBHost"),
             ]
         ),
-        .executableTarget(name: "netmd-jsc-spike", dependencies: ["NetMDJSC"]),
+        .executableTarget(
+            name: "netmd-jsc-spike",
+            dependencies: ["NetMDJSC", .product(name: "ATRACKit", package: "swift-minidisc")]
+        ),
     ],
     swiftLanguageModes: [.v5]
 )

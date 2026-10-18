@@ -81,6 +81,7 @@ public final class USBDeviceHandle: @unchecked Sendable {
     private var pipes: [Int: IOUSBHostPipe] = [:]
 
     static let timeout: TimeInterval = 5
+    static let trace = ProcessInfo.processInfo.environment["NETMD_TRACE"] != nil
 
     public init(info: USBDeviceInfo) throws {
         guard let service = USBBackend.service(for: info.id) else { throw USBError.notFound(info.id) }
@@ -164,6 +165,10 @@ public final class USBDeviceHandle: @unchecked Sendable {
 
     public func transferOut(endpointAddress: Int, data: Data) throws -> Int {
         var transferred = 0
+        let started = Date()
+        defer {
+            if Self.trace { print(String(format: "[usb] out 0x%02x %d bytes %.1f ms", endpointAddress, data.count, Date().timeIntervalSince(started) * 1000)) }
+        }
         do {
             try pipe(endpointAddress).__sendIORequest(with: NSMutableData(data: data), bytesTransferred: &transferred, completionTimeout: Self.timeout)
         } catch {
@@ -188,6 +193,13 @@ public final class USBDeviceHandle: @unchecked Sendable {
         }
         let setup = IOUSBDeviceRequest(bmRequestType: requestType, bRequest: request, wValue: value, wIndex: index, wLength: UInt16(data.length))
         var transferred = 0
+        let started = Date()
+        defer {
+            if Self.trace {
+                print(String(format: "[usb] %.3f ctrl 0x%02x/0x%02x len %d -> %d, %.1f ms", started.timeIntervalSince1970.truncatingRemainder(dividingBy: 1000),
+                             requestType, request, data.length, transferred, Date().timeIntervalSince(started) * 1000))
+            }
+        }
         do {
             try target.__send(setup, data: data, bytesTransferred: &transferred, completionTimeout: Self.timeout)
         } catch {

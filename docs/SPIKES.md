@@ -23,6 +23,11 @@ One fix was needed: jconv, which netmd-js uses for Shift-JIS titles, expects Nod
 - WebAssembly loading finishes through the main run loop, so a command-line host must call `RunLoop.main.run()`. A SwiftUI app already runs it.
 - Claiming the NetMD interface while macOS holds the device works: no capture mode or root needed.
 
-## C. End-to-end LP2 upload
+## C. End-to-end LP2 upload: done, passed
 
-Needs a NetMD deck connected.
+On the MZ-N910: a 15 s file was decoded with Core Audio, encoded to LP2 with ATRACKit, uploaded through netmd-js, listed as LP2 with the right length, persisted across sessions, and was then erased. Details are in `Spikes/NetMDJSC/README.md`. Two findings shape the app:
+
+- Never send netmd-js's `finalize()` USB reset. It throws away TOC changes the unit hasn't written yet.
+- Each track costs ~35–45 s of device-side latency on this portable, however short it is. The data transfer itself takes well under a second. Progress UI should show "waiting for device", not a stuck bar.
+
+Not yet done: listening to an uploaded track on the portable and on the JE440/PC3 after the unit writes its TOC to disc (unplug or stop).

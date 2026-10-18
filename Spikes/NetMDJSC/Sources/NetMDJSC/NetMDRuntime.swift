@@ -227,7 +227,7 @@ public final class NetMDRuntime {
 
     // MARK: - Typed array bridging (JSC C API, avoids per-byte conversion)
 
-    func makeUint8Array(_ data: Data) -> JSValue {
+    public func makeUint8Array(_ data: Data) -> JSValue {
         let ctx = context.jsGlobalContextRef
         let object = JSObjectMakeTypedArray(ctx, kJSTypedArrayTypeUint8Array, data.count, nil)!
         if !data.isEmpty, let bytes = JSObjectGetTypedArrayBytesPtr(ctx, object, nil) {
