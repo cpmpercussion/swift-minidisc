@@ -16,7 +16,15 @@ struct ContentView: View {
                 BurnQueue(store: store, disc: disc)
             } else {
                 ContentUnavailableView {
-                    Label(store.isBusy ? "Connecting…" : store.deviceName.map { "No disc in \($0)" } ?? "No NetMD device", systemImage: "opticaldisc")
+                    Label {
+                        Text(store.isBusy ? "Connecting…" : store.deviceName.map { "No disc in \($0)" } ?? "No NetMD device")
+                    } icon: {
+                        // The icon's cartridge without its waveform (Design/icon/build.py).
+                        Image("Cartridge")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 112)
+                    }
                 } description: {
                     Text(store.deviceName == nil ? "Connect a NetMD MiniDisc unit over USB." : "Insert a disc, then reload.")
                 } actions: {

@@ -346,10 +346,35 @@ def write_icon(waves):
     print(f"open {WORK / 'icon.html'}")
 
 
+# --- In-app image ---------------------------------------------------------------
+# The cartridge alone, for the app's own UI: no waveform, no ground, cropped
+# to the shell, as a vector image set. The shell stays translucent, so the
+# window shows through it as the real plastic would.
+
+def write_cartridge():
+    m = FRAME / 2 + 2
+    x0, y0 = X0 - m, Y0 - m
+    w, h = max(W, LABEL[2] * W) + 2 * m, H + 2 * m
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0} {y0} {w} {h}" width="{w / 4:.0f}" height="{h / 4:.0f}">'
+           + disc_svg() + shell_svg() + label_svg() + "</svg>")
+    catalog = HERE.parent.parent / "App" / "Assets.xcassets"
+    imageset = catalog / "Cartridge.imageset"
+    imageset.mkdir(parents=True, exist_ok=True)
+    info = {"info": {"author": "xcode", "version": 1}}
+    (catalog / "Contents.json").write_text(json.dumps(info, indent=2) + "\n")
+    (imageset / "Cartridge.svg").write_text(svg)
+    (imageset / "Contents.json").write_text(json.dumps({
+        "images": [{"filename": "Cartridge.svg", "idiom": "universal"}],
+        **info,
+        "properties": {"preserves-vector-representation": True},
+    }, indent=2) + "\n")
+    subprocess.run(["rsvg-convert", "-w", "512", str(imageset / "Cartridge.svg"), "-o", str(WORK / "cartridge.png")], check=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--audio", help="recording to derive the audio waveforms from")
-    ap.add_argument("--icon", action="store_true", help=f"also write AppIcon.icon with the {WAVE} waveform and render it with ictool")
+    ap.add_argument("--icon", action="store_true", help=f"also write AppIcon.icon with the {WAVE} waveform, render it with ictool, and write the in-app Cartridge image")
     a = ap.parse_args()
 
     store = HERE / "waveforms.json"
@@ -384,6 +409,7 @@ def main():
     print(f"open {WORK / 'index.html'}")
     if a.icon:
         write_icon(waves)
+        write_cartridge()
 
 
 if __name__ == "__main__":
