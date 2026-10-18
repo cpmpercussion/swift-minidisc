@@ -18,7 +18,7 @@ If you want the most capable MiniDisc tool today, use [Web MiniDisc Pro](https:/
 
 ## Goals
 
-- Support the most advanced NetMD modes available: SP, LP2 and LP4 uploads, gapless album transfers, and the Sony Type-R extras unlocked by netmd-exploits.
+- Support the most advanced NetMD modes available: SP, LP2 and LP4 uploads, gapless album transfers, and the extras netmd-exploits unlocks on Sony Type-R, Type-S and Hi-MD units.
 - Stay small: a focused tool that burns discs well.
 - Stay open: all source public, all upstream licences credited clearly.
 - Signed and notarised `.dmg` releases.
