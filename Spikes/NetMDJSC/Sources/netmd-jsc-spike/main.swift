@@ -1,5 +1,6 @@
 import ATRACKit
 import Foundation
+import JavaScriptCore
 import NetMDJSC
 
 // Spike driver: load netmd-js into JavaScriptCore, self-test its WebAssembly
@@ -9,6 +10,11 @@ import NetMDJSC
 //                   that Swift USB errors reach netmd-js as rejected Promises
 //   --upload-lp2 FILE [--title T] [--chunk BYTES]   (chunk: bytes per encrypted packet, default 0x400 as Web MiniDisc)
 //                   decode FILE with Core Audio, encode LP2 with ATRACKit, upload it as a new track
+//   --erase-disc N  erase the whole disc, only if it has exactly N tracks
+//   --album-lp2 FILE... [--disc-title T]
+//                   gapless LP2 album: one continuous encode split at track boundaries, all
+//                   tracks uploaded in one session (put this option last; it takes the rest)
+//   --eval JS       evaluate JS with the bundle loaded (no device), print the result
 //   --poll-cap-ms MS  poll for replies every MS ms instead of netmd-js's uncapped doubling
 //   --erase-track N --expect-title T
 //                   erase track N (1-based), only if its title is exactly T
@@ -39,6 +45,28 @@ if let path = option("--upload-lp2") {
                  Date().timeIntervalSince(t0) * 1000))
 }
 
+// Gapless album: one encoder for the whole album, so the joins are seamless. Each track's
+// frames stop 50-73 ms short of its audio (encoder look-ahead), so marks land that much early.
+var album: [(title: String, frames: Data)] = []
+if let i = CommandLine.arguments.firstIndex(of: "--album-lp2") {
+    let files = CommandLine.arguments[(i + 1)...].map { URL(fileURLWithPath: $0) }
+    let encoder = try ATRAC3Encoder(mode: .lp2)
+    let t0 = Date()
+    var seconds = 0.0
+    for (n, file) in files.enumerated() {
+        let pcm = try AudioFileDecoder.decode(url: file)
+        seconds += Double(pcm.count / 2) / 44_100
+        var frames = encoder.write(pcm)
+        if n == files.count - 1 { frames += encoder.finish() }
+        // "01-spore.m4a" -> "spore"
+        let name = file.deletingPathExtension().lastPathComponent
+        let title = name.replacingOccurrences(of: #"^\d+[-_. ]+"#, with: "", options: .regularExpression)
+        album.append((title, frames))
+        print(String(format: "  encoded %@: %.1f s, %d bytes", title, Double(pcm.count / 2) / 44_100, frames.count))
+    }
+    print(String(format: "Encoded %d tracks (%.1f min) gaplessly to LP2 in %.1f s", files.count, seconds / 60, Date().timeIntervalSince(t0)))
+}
+
 let started = Date()
 let runtime: NetMDRuntime
 do {
@@ -53,6 +81,23 @@ if let lp2Frames {
     runtime.context.setObject(runtime.makeUint8Array(lp2Frames), forKeyedSubscript: "__uploadLP2" as NSString)
     runtime.context.setObject(option("--title") ?? "swift-minidisc test", forKeyedSubscript: "__uploadTitle" as NSString)
     runtime.context.setObject(Int(option("--chunk") ?? "") ?? 0x400, forKeyedSubscript: "__uploadChunk" as NSString)
+}
+if !album.isEmpty {
+    let tracks = JSValue(newArrayIn: runtime.context)!
+    for (n, track) in album.enumerated() {
+        let item = JSValue(newObjectIn: runtime.context)!
+        item.setObject(track.title, forKeyedSubscript: "title" as NSString)
+        item.setObject(runtime.makeUint8Array(track.frames), forKeyedSubscript: "data" as NSString)
+        tracks.setObject(item, atIndexedSubscript: n)
+    }
+    runtime.context.setObject(tracks, forKeyedSubscript: "__album" as NSString)
+    if let title = option("--disc-title") { runtime.context.setObject(title, forKeyedSubscript: "__discTitle" as NSString) }
+}
+if let n = option("--erase-disc").flatMap(Int.init) {
+    runtime.context.setObject(n, forKeyedSubscript: "__eraseDiscTracks" as NSString)
+}
+if let code = option("--eval") {
+    runtime.context.setObject(code, forKeyedSubscript: "__eval" as NSString)
 }
 if let cap = option("--poll-cap-ms").flatMap(Int.init) {
     runtime.context.setObject(cap, forKeyedSubscript: "__pollCapMs" as NSString)
@@ -106,6 +151,10 @@ runtime.evaluate("""
         console.log(`Encrypted 256 KB as ${n} 1 KB packets in ${Date.now() - t0} ms`);
     }
 
+    if (typeof __eval !== 'undefined') {
+        console.log('eval:', await eval(__eval));
+        return __finish(0);
+    }
     if (typeof __pollCapMs !== 'undefined') {
         // Experiment: netmd-js polls for replies at 10 ms * 2^i with no cap, which can overshoot
         // a slow reply by as long as the reply took. Cap the interval to measure the real wait.
@@ -126,9 +175,9 @@ runtime.evaluate("""
     console.log('Opened:', iface.netMd.getDeviceName());
     const showDisc = async () => {
         const disc = await netmd.listContent(iface);
-        console.log('Disc title:', disc.title, '| tracks:', disc.trackCount, '| left:', disc.left, '| total:', disc.total);
+        console.log('Disc title:', disc.title + (disc.fullWidthTitle ? ' / ' + disc.fullWidthTitle : ''), '| tracks:', disc.trackCount, '| left:', disc.left, '| total:', disc.total);
         for (const group of disc.groups) {
-            for (const t of group.tracks) console.log(`  ${t.index + 1}. ${t.title} (${netmd.EncodingName[t.encoding]}, ${t.duration})`);
+            for (const t of group.tracks) console.log(`  ${t.index + 1}. ${t.title}${t.fullWidthTitle ? ' / ' + t.fullWidthTitle : ''} (${netmd.EncodingName[t.encoding]}, ${t.duration})`);
         }
         return disc;
     };
@@ -136,6 +185,38 @@ runtime.evaluate("""
     // Read-only factory query: the SoC + firmware code netmd-exploits keys compatibility on.
     const factory = await iface.factory();
     console.log('Device code:', await netmd.getDescriptiveDeviceCode(factory));
+
+    if (typeof __eraseDiscTracks !== 'undefined') {
+        if (disc.trackCount !== __eraseDiscTracks) {
+            console.log(`Not erasing: disc has ${disc.trackCount} tracks, expected ${__eraseDiscTracks}`);
+            return __finish(1);
+        }
+        await iface.eraseDisc();
+        console.log('Erased disc');
+        await showDisc();
+    }
+
+    if (typeof __album !== 'undefined') {
+        // As Web MiniDisc does it: one session for all tracks, then close and release.
+        const t0 = Date.now();
+        await netmd.prepareDownload(iface);
+        const session = new netmd.MDSession(iface);
+        await session.init();
+        for (const { title, data } of __album) {
+            const t1 = Date.now();
+            const track = new netmd.MDTrack(title, netmd.Wireformat.lp2, data.buffer, 0x400, '', netmd.getAsyncPacketIterator);
+            let sentAt = 0;
+            const [index] = await session.downloadTrack(track, ({ writtenBytes, totalBytes }) => {
+                if (writtenBytes === totalBytes - (totalBytes % 0x400 || 0x400) && !sentAt) sentAt = Date.now();
+            });
+            console.log(`  track ${index + 1} "${title}": ${(data.byteLength / 1048576).toFixed(1)} MB, data sent in ${((sentAt || Date.now()) - t1) / 1000} s, done after ${(Date.now() - t1) / 1000} s`);
+        }
+        await session.close();
+        await iface.release();
+        if (typeof __discTitle !== 'undefined') await netmd.renameDisc(iface, __discTitle);
+        console.log(`Album uploaded in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+        await showDisc();
+    }
 
     if (typeof __uploadLP2 !== 'undefined') {
         // Raw ATRAC3 frames, no .at3 header (see netmd-js README: LP2 uploads take raw data).
