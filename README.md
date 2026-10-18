@@ -12,7 +12,7 @@ The only thing this project adds is a **native Mac interface**: drag files from 
 
 ## Why now
 
-Until recently, good LP2/LP4 encoding meant running Sony's own `at3tool`, usually in a Docker container or on a remote server. The open-source alternative, atracdenc, is noticeably worse. [atrac-encoder](https://github.com/kai-h/atrac-encoder) (MIT, 2026) changes that: it's an open C encoder whose output is byte-identical to Sony's. With it, a self-contained Mac app can burn reference-quality LP2/LP4 with nothing else installed.
+Until recently, good LP2/LP4 encoding meant running Sony's own `at3tool`, usually in a Docker container or on a remote server. The open-source alternative, [atracdenc](https://github.com/dcherednik/atracdenc), is noticeably worse for ATRAC3, though it remains the only open ATRAC1 (SP) encoder. [atrac-encoder](https://github.com/kai-h/atrac-encoder) (MIT, 2026) changes that: it's an open C encoder whose output is byte-identical to Sony's. With it, a self-contained Mac app can burn reference-quality LP2/LP4 with nothing else installed.
 
 If you want the most capable MiniDisc tool today, use [Web MiniDisc Pro](https://web.minidisc.wiki). It's the reference this app follows.
 

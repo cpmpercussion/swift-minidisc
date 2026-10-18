@@ -104,6 +104,8 @@ Decode with AVFoundation (`AVAudioFile` / `AVAudioConverter`) to 44.1 kHz stereo
 
 ## Decisions
 
-- **No atracdenc.** Its LP2/LP4 quality is noticeably below Sony's reference encoder, and atrac-encoder replaces it. The only thing atracdenc would add is ATRAC1 for netmd-exploits' "ATRAC1 Upload" (true SP upload, Type-S only). Standard SP upload sends PCM and lets the unit's own Sony hardware encoder do the work, so we drop true SP upload rather than ship a worse encoder. Revisit only if a reference-quality ATRAC1 encoder appears. This also removes the LGPL dependency.
+- **atracdenc isn't used for LP2/LP4.** Its ATRAC3 quality is noticeably below Sony's reference encoder, and atrac-encoder replaces it.
+- **SP doesn't need an encoder in the app.** Standard NetMD SP upload sends PCM, and the unit's own Sony hardware encoder (ATRAC Type-R/S) does the encoding. That works on every NetMD unit and is the default.
+- **True ATRAC1 upload is optional and later.** netmd-exploits' "ATRAC1 Upload" (Type-S only) writes pre-encoded SP data, so it needs an ATRAC1 encoder, and [atracdenc](https://github.com/dcherednik/atracdenc) (LGPL-2.1) is the only open one. It's faster than realtime SP and also allows uploading existing ATRAC1 files. If we add it, atracdenc becomes an optional component credited in ACKNOWLEDGEMENTS.md, with the unit's own encoder still the default. Until then, no LGPL dependency.
 - Test hardware: NetMD portables MZ-N505, MZ-N910 and MZ-NH700 (Hi-MD unit, used in NetMD mode with standard MDs), plus a non-NetMD Type-R deck for checking that discs play back. netmd-js lists all three portables (`0x0084`, `0x00c7`, `0x0184`). Which exploits apply depends on the SoC and firmware each unit reports (netmd-exploits: R = CXD2677, S = CXD2678/2680, Hn/Hr = CXD2681). Record the reported versions on first connection.
 - Minimum macOS version: probably 14 (for `@Observable`).
