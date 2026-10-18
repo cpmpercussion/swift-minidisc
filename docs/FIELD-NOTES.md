@@ -80,6 +80,12 @@ A command-line host must call `RunLoop.main.run()`; with `dispatchMain()` it han
 
 ---
 
+## SwiftUI
+
+### Hosted views may not see `@Environment` objects
+
+*Observed.* The app crashed with an `EnvironmentValues.subscript` assertion when an accessibility query (`entire contents` of the window via System Events) forced layout of a toolbar item that read `@Environment(DiscStore.self)`. Toolbar content is hosted outside the window's view tree. Fixing only the toolbar wasn't enough: the same query crashed it again in another view (table cells are hosted too). The app now passes the store to every view explicitly and doesn't use `@Environment` for it.
+
 ## Audio pipeline
 
 ### iCloud Drive files may be placeholders

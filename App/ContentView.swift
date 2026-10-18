@@ -1,17 +1,19 @@
 import NetMDKit
 import SwiftUI
 
+// The store is passed explicitly rather than through @Environment: views SwiftUI hosts
+// outside the window tree (toolbar items, table cells) can be built without it (FIELD-NOTES).
 struct ContentView: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
 
     var body: some View {
         VStack(spacing: 0) {
             if let disc = store.disc {
-                DiscHeader(disc: disc)
+                DiscHeader(store: store, disc: disc)
                 Divider()
-                TrackTable(disc: disc)
+                TrackTable(store: store, disc: disc)
                 Divider()
-                BurnQueue(disc: disc)
+                BurnQueue(store: store, disc: disc)
             } else {
                 ContentUnavailableView {
                     Label(store.isBusy ? "Connecting…" : store.deviceName.map { "No disc in \($0)" } ?? "No NetMD device", systemImage: "opticaldisc")
@@ -27,7 +29,7 @@ struct ContentView: View {
         }
         .frame(minWidth: 560, minHeight: 480)
         .toolbar {
-            ToolbarItem { StatusView() }
+            ToolbarItem { StatusView(store: store) }
             ToolbarItem {
                 Button("Reload", systemImage: "arrow.clockwise") { Task { await store.refresh() } }
                     .disabled(store.disc == nil || store.isBusy)
@@ -42,7 +44,7 @@ struct ContentView: View {
 }
 
 private struct DiscHeader: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
     let disc: Disc
     @State private var title = ""
 
@@ -67,14 +69,14 @@ private struct DiscHeader: View {
 }
 
 private struct TrackTable: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
     let disc: Disc
 
     var body: some View {
         Table(disc.tracks) {
             TableColumn("#") { Text("\($0.index + 1)").monospacedDigit() }.width(28)
             TableColumn("Title") { track in
-                TrackTitleField(track: track)
+                TrackTitleField(store: store, track: track)
             }
             TableColumn("Mode") { Text($0.encoding.uppercased()) }.width(44)
             TableColumn("Time") { Text(Duration.seconds($0.duration).formatted(.time(pattern: .minuteSecond))).monospacedDigit() }.width(52)
@@ -90,7 +92,7 @@ private struct TrackTable: View {
 }
 
 private struct TrackTitleField: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
     let track: Track
     @State private var title = ""
 
@@ -103,7 +105,7 @@ private struct TrackTitleField: View {
 }
 
 private struct BurnQueue: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
     let disc: Disc
 
     var body: some View {
@@ -115,9 +117,9 @@ private struct BurnQueue: View {
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else {
                 List {
-                    ForEach(store.queue) { file in
+                    ForEach($store.queue) { $file in
                         HStack {
-                            Text(file.title)
+                            TextField("Title", text: $file.title)
                             Spacer()
                             Text(Duration.seconds(file.duration).formatted(.time(pattern: .minuteSecond))).monospacedDigit()
                         }
@@ -158,7 +160,7 @@ private struct BurnQueue: View {
 }
 
 private struct StatusView: View {
-    @Environment(DiscStore.self) private var store
+    let store: DiscStore
 
     var body: some View {
         switch store.phase {

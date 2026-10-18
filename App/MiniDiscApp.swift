@@ -6,9 +6,9 @@ struct MiniDiscApp: App {
 
     var body: some Scene {
         Window("MiniDisc", id: "main") {
-            ContentView()
-                .environment(store)
+            ContentView(store: store)
                 .task { await store.connect() }
+                .onOpenURL { url in Task { await store.add([url]) } }
         }
         .commands {
             CommandGroup(replacing: .appInfo) {
