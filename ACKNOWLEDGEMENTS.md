@@ -9,6 +9,7 @@ swift-minidisc is a native interface on top of other people's work. Thank you to
 | [Web MiniDisc Pro](https://github.com/asivery/webminidisc) | asivery, cybercase and contributors | GPL-2.0 | Reference interface and behaviour |
 | [atrac-encoder](https://github.com/kai-h/atrac-encoder) | kai-h | MIT | ATRAC3 LP2/LP4 encoding |
 | [Keystone](https://github.com/keystone-engine/keystone) (WebAssembly build shipped in netmd-exploits) | Keystone Engine contributors | GPL-2.0 | Assembling netmd-exploits' ARM payloads |
+| [buffer](https://github.com/feross/buffer) | feross and contributors | MIT | Node `Buffer` for netmd-js in JavaScriptCore |
 | [linux-minidisc](https://github.com/glaubitz/linux-minidisc) | linux-minidisc contributors | GPL-2.0 | Protocol groundwork the above builds on |
 
 Not currently shipped, but part of the same ecosystem:

@@ -7,8 +7,9 @@
     "build": "node js/build.mjs"
   },
   "dependencies": {
-    "netmd-js": "4.4.1",
-    "netmd-exploits": "0.5.12"
+    "buffer": "6.0.3",
+    "netmd-exploits": "0.5.12",
+    "netmd-js": "4.4.1"
   },
   "devDependencies": {
     "esbuild": "0.25.0"

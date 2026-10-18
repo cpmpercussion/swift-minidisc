@@ -15,7 +15,7 @@ await build({
     format: 'iife',
     platform: 'browser',
     target: 'es2020',
-    inject: [shim('prelude.js')],
+    inject: [shim('prelude.js'), shim('buffer.js')],
     alias: {
         util: shim('util.js'),
         fs: shim('empty.js'),

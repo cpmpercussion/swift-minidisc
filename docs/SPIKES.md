@@ -13,13 +13,15 @@ Still open: NetMD upload wants raw frames plus netmd-js's own wire format. Check
 
 ## B. netmd-js in JavaScriptCore
 
-**Passed, up to device discovery.** No deck was connected, so no USB traffic has run yet. Details are in `Spikes/NetMDJSC/README.md`. Run it with `Spikes/NetMDJSC/run.sh`.
+**Passed on real hardware (MZ-N910, firmware `S1.400`).** The Swift backend claims the NetMD interface with no driver conflicts, opens the device, lists the disc (title, 8 SP tracks, durations, free space) and reads the device code through netmd-js's factory interface. The Type-S code `S1.400` means every netmd-exploits feature is available on this unit, including ATRAC1 upload, SP faster upload and track download.
+
+One fix was needed: jconv, which netmd-js uses for Shift-JIS titles, expects Node's global `Buffer`. Web MiniDisc gets it from webpack 4's polyfills. The bundle now injects the `buffer` package (MIT). Details are in `Spikes/NetMDJSC/README.md`. Run it with `Spikes/NetMDJSC/run.sh`.
 
 - netmd-js 4.4.1 and netmd-exploits 0.5.12, unmodified, are bundled by esbuild and load in a plain JSContext in about 150 ms. Both WebAssembly modules work: the DES known-answer test passes and Keystone loads.
 - netmd-js's device discovery goes through a small WebUSB shim to a Swift USB backend and reports "No NetMD device found" cleanly.
 - `allow-jit` is required: encrypting 4 MB takes 1.0 s with it and 31 s without.
 - WebAssembly loading finishes through the main run loop, so a command-line host must call `RunLoop.main.run()`. A SwiftUI app already runs it.
-- Main risk: whether we can claim the NetMD interface while macOS holds the device. Check this first on hardware.
+- Claiming the NetMD interface while macOS holds the device works: no capture mode or root needed.
 
 ## C. End-to-end LP2 upload
 

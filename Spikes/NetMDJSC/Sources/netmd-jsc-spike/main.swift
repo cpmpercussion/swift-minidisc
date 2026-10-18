@@ -74,6 +74,9 @@ runtime.evaluate("""
     for (const group of disc.groups) {
         for (const t of group.tracks) console.log(`  ${t.index + 1}. ${t.title} (${netmd.EncodingName[t.encoding]}, ${t.duration})`);
     }
+    // Read-only factory query: the SoC + firmware code netmd-exploits keys compatibility on.
+    const factory = await iface.factory();
+    console.log('Device code:', await netmd.getDescriptiveDeviceCode(factory));
     await iface.netMd.finalize();
     __finish(0);
 })().catch((e) => {
