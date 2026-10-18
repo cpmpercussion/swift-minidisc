@@ -1,0 +1,9 @@
+[submodule "ThirdParty/atrac-encoder"]
+	path = ThirdParty/atrac-encoder
+	url = https://github.com/kai-h/atrac-encoder
+[submodule "ThirdParty/netmd-js"]
+	path = ThirdParty/netmd-js
+	url = https://github.com/cybercase/netmd-js
+[submodule "ThirdParty/netmd-exploits"]
+	path = ThirdParty/netmd-exploits
+	url = https://github.com/asivery/netmd-exploits
