@@ -47,6 +47,7 @@ private struct DiscHeader: View {
     let store: DiscStore
     let disc: Disc
     @State private var title = ""
+    @State private var confirmingErase = false
 
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -61,8 +62,15 @@ private struct DiscHeader: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+            Button("Erase Disc…", systemImage: "trash", role: .destructive) { confirmingErase = true }
+                .disabled(!disc.isWritable || disc.tracks.isEmpty || store.isBusy)
         }
         .padding()
+        .confirmationDialog("Erase “\(disc.displayTitle.isEmpty ? "Untitled disc" : disc.displayTitle)”?", isPresented: $confirmingErase) {
+            Button("Erase All \(disc.tracks.count) Tracks", role: .destructive) { Task { await store.eraseDisc() } }
+        } message: {
+            Text("Every track, the disc title and any groups will be erased. This can’t be undone.")
+        }
         .onAppear { title = disc.displayTitle }
         .onChange(of: disc.displayTitle) { title = $1 }
     }
@@ -71,9 +79,11 @@ private struct DiscHeader: View {
 private struct TrackTable: View {
     let store: DiscStore
     let disc: Disc
+    @State private var selection = Set<Track.ID>()
+    @State private var pendingErase: [Track] = []
 
     var body: some View {
-        Table(disc.tracks) {
+        Table(disc.tracks, selection: $selection) {
             TableColumn("#") { Text("\($0.index + 1)").monospacedDigit() }.width(28)
             TableColumn("Title") { track in
                 TrackTitleField(store: store, track: track)
@@ -82,12 +92,33 @@ private struct TrackTable: View {
             TableColumn("Time") { Text(Duration.seconds($0.duration).formatted(.time(pattern: .minuteSecond))).monospacedDigit() }.width(52)
         }
         .contextMenu(forSelectionType: Track.ID.self) { ids in
-            if let id = ids.first, let track = disc.tracks.first(where: { $0.id == id }) {
-                Button("Erase “\(track.displayTitle)”", role: .destructive) { Task { await store.erase(track) } }
-                    // Erasing shifts track indexes, and group ranges would need rewriting.
-                    .disabled(disc.hasGroups || store.isBusy)
+            let tracks = disc.tracks.filter { ids.contains($0.id) }
+            if !tracks.isEmpty {
+                Button(tracks.count == 1 ? "Erase “\(tracks[0].displayTitle)”…" : "Erase \(tracks.count) Tracks…", role: .destructive) {
+                    pendingErase = tracks
+                }
+                .disabled(!canErase)
             }
         }
+        .onDeleteCommand {
+            if canErase { pendingErase = disc.tracks.filter { selection.contains($0.id) } }
+        }
+        .confirmationDialog(eraseTitle, isPresented: Binding(get: { !pendingErase.isEmpty }, set: { if !$0 { pendingErase = [] } })) {
+            Button("Erase", role: .destructive) {
+                let tracks = pendingErase
+                selection.subtract(tracks.map(\.id))
+                Task { await store.erase(tracks) }
+            }
+        } message: {
+            Text("This can’t be undone.")
+        }
+    }
+
+    // Erasing shifts track indexes, and group ranges would need rewriting.
+    private var canErase: Bool { disc.isWritable && !disc.hasGroups && !store.isBusy }
+
+    private var eraseTitle: String {
+        pendingErase.count == 1 ? "Erase “\(pendingErase[0].displayTitle)”?" : "Erase \(pendingErase.count) tracks?"
     }
 }
 

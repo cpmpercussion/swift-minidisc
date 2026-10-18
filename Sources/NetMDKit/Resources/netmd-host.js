@@ -54,6 +54,11 @@
             await device().eraseTrack(index);
         },
 
+        // Erases every track and the disc title, groups included.
+        async eraseDisc() {
+            await device().eraseDisc();
+        },
+
         // One session for every track: the device takes ~40 s per track otherwise (FIELD-NOTES).
         // progress(trackNumber, writtenBytes, totalBytes) is called as data goes out.
         async upload(tracks, progress) {

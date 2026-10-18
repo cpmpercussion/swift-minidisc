@@ -63,9 +63,20 @@ final class DiscStore {
         }
     }
 
-    func erase(_ track: Track) async {
-        await run("Erasing \(track.displayTitle)…") {
-            try await client?.eraseTrack(track.index)
+    func erase(_ tracks: [Track]) async {
+        let label = tracks.count == 1 ? tracks[0].displayTitle : "\(tracks.count) tracks"
+        await run("Erasing \(label)…") {
+            // Highest index first, so erasing one doesn't renumber the rest.
+            for track in tracks.sorted(by: { $0.index > $1.index }) {
+                try await client?.eraseTrack(track.index)
+            }
+            disc = try await client?.disc()
+        }
+    }
+
+    func eraseDisc() async {
+        await run("Erasing disc…") {
+            try await client?.eraseDisc()
             disc = try await client?.disc()
         }
     }

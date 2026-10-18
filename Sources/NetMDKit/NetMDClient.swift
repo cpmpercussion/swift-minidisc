@@ -85,6 +85,7 @@ public final class NetMDClient: @unchecked Sendable {
     public func renameDisc(_ title: String) async throws { try await send("renameDisc", title) }
     public func renameTrack(_ index: Int, to title: String) async throws { try await send("renameTrack", index, title) }
     public func eraseTrack(_ index: Int) async throws { try await send("eraseTrack", index) }
+    public func eraseDisc() async throws { try await send("eraseDisc") }
     public func close() async { try? await send("close") }
 
     /// Uploads tracks in one session. `progress(track, sent, total)` reports bytes sent; once a
