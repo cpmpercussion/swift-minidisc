@@ -6,9 +6,13 @@ A native macOS (SwiftUI) app for putting your existing audio files onto MiniDisc
 
 ## What this is (and isn't)
 
-The hard work of talking to MiniDisc hardware has already been done, in the open, by the MiniDisc community: [netmd-js](https://github.com/cybercase/netmd-js), [netmd-exploits](https://github.com/asivery/netmd-exploits), [Web MiniDisc Pro](https://github.com/asivery/webminidisc), [linux-minidisc](https://github.com/glaubitz/linux-minidisc), [atracdenc](https://github.com/dcherednik/atracdenc) and [atrac-encoder](https://github.com/kai-h/atrac-encoder). This project builds on that work. It doesn't replace it.
+The hard work of talking to MiniDisc hardware has already been done, in the open, by the MiniDisc community: [netmd-js](https://github.com/cybercase/netmd-js), [netmd-exploits](https://github.com/asivery/netmd-exploits), [Web MiniDisc Pro](https://github.com/asivery/webminidisc), [linux-minidisc](https://github.com/glaubitz/linux-minidisc) and [atrac-encoder](https://github.com/kai-h/atrac-encoder). This project builds on that work. It doesn't replace it.
 
 The only thing this project adds is a **native Mac interface**: drag files from Finder, decode them with Core Audio, encode on-device, and burn them to disc, with no browser and no WebUSB.
+
+## Why now
+
+Until recently, good LP2/LP4 encoding meant running Sony's own `at3tool`, usually in a Docker container or on a remote server. The open-source alternative, atracdenc, is noticeably worse. [atrac-encoder](https://github.com/kai-h/atrac-encoder) (MIT, 2026) changes that: it's an open C encoder whose output is byte-identical to Sony's. With it, a self-contained Mac app can burn reference-quality LP2/LP4 with nothing else installed.
 
 If you want the most capable MiniDisc tool today, use [Web MiniDisc Pro](https://web.minidisc.wiki). It's the reference this app follows.
 

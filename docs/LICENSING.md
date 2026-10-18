@@ -9,7 +9,6 @@ This isn't legal advice. It's our working position, written down so it can be ch
 | Source written for this repo | MIT ([LICENSE](../LICENSE)) |
 | netmd-js, netmd-exploits (bundled JS) | GPL-2.0 |
 | libatrac3 from kai-h/atrac-encoder (LP2/LP4 encoder) | MIT |
-| atracdenc (ATRAC1 SP encoder, v0.2) | LGPL-2.1 |
 | The distributed app (`.app` / `.dmg`) as a whole | **GPL-2.0** |
 
 ## Why the app is GPL-2.0 even though our code is MIT
@@ -21,10 +20,6 @@ GPL obligations for each binary release:
 - State that the binary is licensed under GPL-2.0, and include the licence text in the app.
 - Link the exact source tag, including pinned submodules and build scripts, so anyone can reproduce the bundle.
 - Don't add any restrictions on top (no DRM, no extra EULA terms).
-
-## atracdenc (LGPL-2.1)
-
-Link dynamically, or ship it with object files and relinking instructions. Inside a GPL-2.0 app this is simple either way: LGPL-2.1 code can be combined into a GPL work.
 
 ## Mac App Store
 

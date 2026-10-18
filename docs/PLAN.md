@@ -30,7 +30,7 @@ Counter-example to avoid: a recent closed-source "native macOS NetMD app" announ
 
 - **Gapless album upload** in LP2/LP4, using the atrac-encoder streaming API (one continuous encode, split at track marks).
 - **Sony Type-R extras via netmd-exploits**, gated per device and clearly marked experimental:
-  - True ATRAC1 SP upload (encoded locally with atracdenc instead of the deck's realtime encoder).
+  - SP faster upload (`PCMFasterUpload`, Type-S only).
   - Track download/ripping from disc.
   - Whatever else netmd-exploits supports and Web MiniDisc Pro exposes, matching its safety warnings.
 
@@ -49,9 +49,9 @@ SwiftUI views
     │
 DiscStore (@Observable, Swift)  ── AVFoundation: decode files → 44.1 kHz 16-bit PCM
     │                                 │
-NetMDService (Swift)               Encoder (Swift wrapper)
-    │                                 ├─ libatrac3 (C, MIT): LP2 / LP4
-JavaScriptCore runtime              └─ atracdenc (C++, LGPL-2.1): ATRAC1 SP, v0.2
+NetMDService (Swift)               ATRACKit (Swift wrapper)
+    │                                 └─ libatrac3 (C, MIT): LP2 / LP4
+JavaScriptCore runtime
     ├─ netmd-js       (bundled, GPL-2.0)
     ├─ netmd-exploits (bundled, GPL-2.0)
     └─ WebUSB shim  ──►  Swift USB layer (IOUSBHost / IOKit)
@@ -93,13 +93,17 @@ Decode with AVFoundation (`AVAudioFile` / `AVAudioConverter`) to 44.1 kHz stereo
 1. Read-only disc browser.
 2. Title editing and track management.
 3. Upload SP/LP2/LP4 → **v0.1**.
-4. Gapless, exploits, ATRAC1 SP → **v0.2**.
+4. Gapless, exploits → **v0.2**.
 5. Signing/notarisation pipeline (can run in parallel from milestone 1).
 
 ## Open questions
 
 - netmd-js / netmd-exploits declare `GPL-2.0` without `-only` / `-or-later`. Check the file headers, or ask the authors, which version terms apply.
 - Ask the netmd-js / Web MiniDisc maintainers early whether they're happy with this project. Being a good neighbour matters more than shipping.
-- atrac-encoder is very new (a handful of stars, Oct 2026) and was reconstructed by analysing Sony's `at3tool`. Read its provenance notes and keep atracdenc (LGPL) as a fallback LP2 encoder.
-- Which test hardware is available? (Sony Type-R decks/portables are the target for the exploit features.)
+- atrac-encoder is very new (a handful of stars, Oct 2026) and was reconstructed by analysing Sony's `at3tool`. Read its provenance notes, and do listening checks against discs burned with Sony's tools. It's the reason this project is feasible, so if it has problems we help fix them upstream rather than fall back to a weaker encoder.
+
+## Decisions
+
+- **No atracdenc.** Its LP2/LP4 quality is noticeably below Sony's reference encoder, and atrac-encoder replaces it. The only thing atracdenc would add is ATRAC1 for netmd-exploits' "ATRAC1 Upload" (true SP upload, Type-S only). Standard SP upload sends PCM and lets the unit's own Sony hardware encoder do the work, so we drop true SP upload rather than ship a worse encoder. Revisit only if a reference-quality ATRAC1 encoder appears. This also removes the LGPL dependency.
+- Test hardware: NetMD portables MZ-N505, MZ-N910 and MZ-NH700 (Hi-MD unit, used in NetMD mode with standard MDs), plus a non-NetMD Type-R deck for checking that discs play back. netmd-js lists all three portables (`0x0084`, `0x00c7`, `0x0184`). Which exploits apply depends on the SoC and firmware each unit reports (netmd-exploits: R = CXD2677, S = CXD2678/2680, Hn/Hr = CXD2681). Record the reported versions on first connection.
 - Minimum macOS version: probably 14 (for `@Observable`).
