@@ -1,7 +1,7 @@
 import ATRACKit
 import Foundation
 import JavaScriptCore
-import NetMDJSC
+import NetMDKit
 
 // Spike driver: load netmd-js into JavaScriptCore, self-test its WebAssembly
 // dependencies, then try to open a NetMD device and list the disc.
@@ -50,21 +50,14 @@ if let path = option("--upload-lp2") {
 var album: [(title: String, frames: Data)] = []
 if let i = CommandLine.arguments.firstIndex(of: "--album-lp2") {
     let files = CommandLine.arguments[(i + 1)...].map { URL(fileURLWithPath: $0) }
-    let encoder = try ATRAC3Encoder(mode: .lp2)
     let t0 = Date()
-    var seconds = 0.0
-    for (n, file) in files.enumerated() {
-        let pcm = try AudioFileDecoder.decode(url: file)
-        seconds += Double(pcm.count / 2) / 44_100
-        var frames = encoder.write(pcm)
-        if n == files.count - 1 { frames += encoder.finish() }
+    let frames = try MiniDiscEncoding.gaplessLP(files, mode: .lp2)
+    for (file, data) in zip(files, frames) {
         // "01-spore.m4a" -> "spore"
-        let name = file.deletingPathExtension().lastPathComponent
-        let title = name.replacingOccurrences(of: #"^\d+[-_. ]+"#, with: "", options: .regularExpression)
-        album.append((title, frames))
-        print(String(format: "  encoded %@: %.1f s, %d bytes", title, Double(pcm.count / 2) / 44_100, frames.count))
+        let title = file.deletingPathExtension().lastPathComponent.replacingOccurrences(of: #"^\d+[-_. ]+"#, with: "", options: .regularExpression)
+        album.append((title, data))
     }
-    print(String(format: "Encoded %d tracks (%.1f min) gaplessly to LP2 in %.1f s", files.count, seconds / 60, Date().timeIntervalSince(t0)))
+    print(String(format: "Encoded %d tracks gaplessly to LP2 in %.1f s", files.count, Date().timeIntervalSince(t0)))
 }
 
 let started = Date()

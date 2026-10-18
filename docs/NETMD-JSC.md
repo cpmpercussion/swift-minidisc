@@ -5,9 +5,9 @@ Runs the upstream [netmd-js](https://github.com/cybercase/netmd-js) 4.4.1 and [n
 Licence: this spike bundles GPL-2.0 code, so the built product is GPL-2.0. The Swift and JS glue written here is MIT, like the rest of the repo.
 
 ```sh
-./run.sh               # npm install + bundle, swift build -c release, sign, run
-./run.sh --list-usb    # also list every USB device the Swift backend can see
-./run.sh --fake-device # pretend a (non-existent) MZ-N707 is attached, to test error paths
+make cli                          # bundle JS, build, sign, run netmd-cli
+make cli ARGS=--list-usb          # also list every USB device the Swift backend can see
+make cli ARGS=--fake-device       # pretend a (non-existent) MZ-N707 is attached, to test error paths
 ```
 
 ## Result (2026-10-18, macOS 26, Xcode 27.1, no deck attached)
@@ -40,7 +40,7 @@ Without the entitlement, JSC in a third-party process runs interpreter-only. Thi
 | JSC, no entitlement (with or without hardened runtime) | 3.2 s | **31 s** |
 | JSC, hardened runtime + `allow-jit` | 0.25 s | **1.0 s** |
 
-A 4 MB buffer is about one 4-minute LP2 track. That makes `allow-jit` effectively required. It's a standard hardened-runtime entitlement and is allowed for Developer ID notarised apps, so this isn't a distribution blocker. See `NetMDJSC.entitlements`.
+A 4 MB buffer is about one 4-minute LP2 track. That makes `allow-jit` effectively required. It's a standard hardened-runtime entitlement and is allowed for Developer ID notarised apps, so this isn't a distribution blocker. See `netmd-cli.entitlements` and `App/MiniDisc.entitlements`.
 
 ### 2. Spin the main CFRunLoop, not `dispatchMain()`
 
@@ -63,7 +63,7 @@ There's no chooser in a native app, so in the shim every attached device that ma
 ### 4. Polyfills
 
 - **Swift:** `setTimeout`/`clearTimeout` (`DispatchQueue.main`), `crypto.getRandomValues` (`arc4random_buf` straight into the typed array), `console.*`, and the `__usbHost` bridge.
-- **JS** (`js/shims/prelude.js`, injected by esbuild): `atob`/`btoa` (crypto-js-wasm unpacks its wasm with `atob`), `TextEncoder`/`TextDecoder` (UTF-8 only), `queueMicrotask`, `self`/`window` aliases.
+- **JS** (`JS/shims/prelude.js`, injected by esbuild): `atob`/`btoa` (crypto-js-wasm unpacks its wasm with `atob`), `TextEncoder`/`TextDecoder` (UTF-8 only), `queueMicrotask`, `self`/`window` aliases.
 - **Module aliases:**
   - `util` → `inspect` shim (debug logging only)
   - `fs`/`path` → stubs
@@ -79,21 +79,21 @@ All JS runs on the main thread. Each USB operation runs synchronously on a seria
 
 | Path | What |
 |---|---|
-| `package.json`, `js/build.mjs` | Pin netmd-js 4.4.1 / netmd-exploits 0.5.12 from npm; esbuild them to one IIFE |
-| `js/entry.js` | Exposes `globalThis.NetMDBundle = { netmd, exploits, Crypto }` |
-| `js/shims/*` | Prelude polyfills and module aliases |
-| `Sources/NetMDJSC/Resources/webusb-shim.js` | `navigator.usb` / `USBDevice` over `__usbHost` |
-| `Sources/NetMDJSC/NetMDRuntime.swift` | JSContext host: polyfills, `__usbHost`, typed-array bridging |
-| `Sources/NetMDJSC/USBBackend.swift` | IOUSBHost enumeration, open, configure, claim, control and bulk transfers |
+| `JS/package.json`, `JS/build.mjs` | Pin netmd-js 4.4.1 / netmd-exploits 0.5.12 from npm; esbuild them to one IIFE |
+| `JS/entry.js` | Exposes `globalThis.NetMDBundle = { netmd, exploits, Crypto }` |
+| `JS/shims/*` | Prelude polyfills and module aliases |
+| `Sources/NetMDKit/Resources/webusb-shim.js` | `navigator.usb` / `USBDevice` over `__usbHost` |
+| `Sources/NetMDKit/NetMDRuntime.swift` | JSContext host: polyfills, `__usbHost`, typed-array bridging |
+| `Sources/NetMDKit/USBBackend.swift` | IOUSBHost enumeration, open, configure, claim, control and bulk transfers |
 | `Sources/netmd-jsc-spike/main.swift` | Self-tests and the list-disc scenario |
-| `NetMDJSC.entitlements`, `run.sh` | Hardened runtime + `allow-jit` signing |
+| `netmd-cli.entitlements`, `make cli` | Hardened runtime + `allow-jit` signing for the CLI |
 
 The bundle comes from the npm packages pinned at the same versions as the `ThirdParty/` submodules. The submodules aren't modified.
 
 ## Risks and what to test with a deck attached
 
 1. **Device ownership.** This is the main unknown. If macOS's composite driver already owns the `IOUSBHostDevice`, opening it ourselves may fail. The handle tolerates that: all NetMD control traffic is interface-recipient and goes through the claimed `IOUSBHostInterface`. `reset()` and any `selectConfiguration` that isn't a no-op do need the device object, though. If claiming the interface also fails, the fallbacks are `IOUSBHostObjectInitOptions.deviceCapture` (needs root or an entitlement) or the older `IOUSBDeviceInterface` plug-in API, which is what Chrome's WebUSB uses on macOS.
-2. Run `./run.sh` with a deck attached and check that it lists the disc. Then rename a track, upload one SP track, and with the atrac-encoder spike, upload an LP2 track.
+2. Run `make cli` with a deck attached and check that it lists the disc. Then rename a track, upload one SP track, and with the atrac-encoder spike, upload an LP2 track.
 3. Bulk transfer chunking: netmd-js reads in 64 KiB chunks and the timeout is 5 s. Check that long uploads don't time out, and adjust `USBDeviceHandle.timeout` for bulk if they do.
 4. `finalize()` calls `reset()` first. Check that a reset doesn't re-enumerate the device under a new registry ID while we hold the handle.
 5. Exploit-based features (factory mode, ATRAC1 SP upload, ripping) on a Type-R device. They load fine here, but none of their code paths have run.

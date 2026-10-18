@@ -2,7 +2,7 @@
 
 A native macOS (SwiftUI) app for putting your existing audio files onto MiniDisc over NetMD.
 
-**Status:** spikes done. Encoding, listing and gapless LP2 upload work on a real MZ-N910 from Swift; the app itself isn't built yet. See [docs/PLAN.md](docs/PLAN.md), [docs/SPIKES.md](docs/SPIKES.md), and [docs/FIELD-NOTES.md](docs/FIELD-NOTES.md) for what we've learned about running this stack natively and how the hardware behaves in practice.
+**Status:** early. A first SwiftUI app lists a disc, renames, erases and burns dropped files as SP, or as gapless LP2/LP4, tested on an MZ-N910. See [docs/PLAN.md](docs/PLAN.md), [docs/SPIKES.md](docs/SPIKES.md), and [docs/FIELD-NOTES.md](docs/FIELD-NOTES.md) for what we've learned about running this stack natively and how the hardware behaves in practice.
 
 ## What this is (and isn't)
 
@@ -28,6 +28,18 @@ If you want the most capable MiniDisc tool today, use [Web MiniDisc Pro](https:/
 - Commercial release, paid tiers, accounts, telemetry.
 - Mac App Store distribution (the GPL components rule it out, see [docs/LICENSING.md](docs/LICENSING.md)).
 - New reverse engineering or protocol work. Improvements of that kind belong upstream.
+
+## Building
+
+Needs Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen) and Node (for bundling netmd-js). After cloning:
+
+```sh
+git submodule update --init
+make run      # bundle JS, generate MiniDisc.xcodeproj, build and open the app
+make test     # Swift tests + upstream's byte-exact encoder tests
+```
+
+`make cli ARGS=...` runs the command-line hardware test tool ([docs/NETMD-JSC.md](docs/NETMD-JSC.md)).
 
 ## Licensing in one paragraph
 

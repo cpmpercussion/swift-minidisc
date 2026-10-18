@@ -4,7 +4,7 @@
   "license": "GPL-2.0",
   "description": "Bundles netmd-js + netmd-exploits for JavaScriptCore (spike)",
   "scripts": {
-    "build": "node js/build.mjs"
+    "build": "node build.mjs"
   },
   "dependencies": {
     "buffer": "5.7.1",

@@ -7,7 +7,7 @@ import JavaScriptCore
 /// its Promise back on the main thread, so netmd-js sees an ordinary async WebUSB.
 public final class NetMDRuntime {
     public let context: JSContext
-    private let usbQueue = DispatchQueue(label: "NetMDJSC.usb")
+    private let usbQueue = DispatchQueue(label: "NetMDKit.usb")
     private var handles: [UInt64: USBDeviceHandle] = [:] // touched only on usbQueue
     private var timers: [Int: DispatchWorkItem] = [:]
     private var nextTimerID = 1
@@ -29,6 +29,7 @@ public final class NetMDRuntime {
 
         try evaluateResource("netmd-bundle", "js")
         try evaluateResource("webusb-shim", "js")
+        try evaluateResource("netmd-host", "js")
 
         // netmd-exploits assembles ARM payloads with keystone compiled to WebAssembly.
         let wasm = try Data(contentsOf: try resourceURL("assembler", "wasm"))
@@ -55,7 +56,7 @@ public final class NetMDRuntime {
         context.evaluateScript(try String(contentsOf: url, encoding: .utf8), withSourceURL: url)
         if let exception = context.exception {
             context.exception = nil
-            throw NSError(domain: "NetMDJSC", code: 1, userInfo: [NSLocalizedDescriptionKey: "Loading \(name).\(ext): \(exception)"])
+            throw NSError(domain: "NetMDKit", code: 1, userInfo: [NSLocalizedDescriptionKey: "Loading \(name).\(ext): \(exception)"])
         }
     }
 

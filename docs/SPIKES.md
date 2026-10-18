@@ -15,7 +15,7 @@ Still open: NetMD upload wants raw frames plus netmd-js's own wire format. Check
 
 **Passed on real hardware (MZ-N910, firmware `S1.400`).** The Swift backend claims the NetMD interface with no driver conflicts, opens the device, lists the disc (title, 8 SP tracks, durations, free space) and reads the device code through netmd-js's factory interface. The Type-S code `S1.400` means every netmd-exploits feature is available on this unit, including ATRAC1 upload, SP faster upload and track download.
 
-One fix was needed: jconv, which netmd-js uses for Shift-JIS titles, expects Node's global `Buffer`. Web MiniDisc gets it from webpack 4's polyfills. The bundle now injects the `buffer` package (MIT). Details are in `Spikes/NetMDJSC/README.md`. Run it with `Spikes/NetMDJSC/run.sh`.
+One fix was needed: jconv, which netmd-js uses for Shift-JIS titles, expects Node's global `Buffer`. Web MiniDisc gets it from webpack 4's polyfills. The bundle now injects the `buffer` package (MIT). Details are in `docs/NETMD-JSC.md`. Run it with `make cli`.
 
 - netmd-js 4.4.1 and netmd-exploits 0.5.12, unmodified, are bundled by esbuild and load in a plain JSContext in about 150 ms. Both WebAssembly modules work: the DES known-answer test passes and Keystone loads.
 - netmd-js's device discovery goes through a small WebUSB shim to a Swift USB backend and reports "No NetMD device found" cleanly.
@@ -25,7 +25,7 @@ One fix was needed: jconv, which netmd-js uses for Shift-JIS titles, expects Nod
 
 ## C. End-to-end LP2 upload: done, passed
 
-On the MZ-N910: a 15 s file was decoded with Core Audio, encoded to LP2 with ATRACKit, uploaded through netmd-js, listed as LP2 with the right length, persisted across sessions, and was then erased. Details are in `Spikes/NetMDJSC/README.md`. Two findings shape the app:
+On the MZ-N910: a 15 s file was decoded with Core Audio, encoded to LP2 with ATRACKit, uploaded through netmd-js, listed as LP2 with the right length, persisted across sessions, and was then erased. Details are in `docs/NETMD-JSC.md`. Two findings shape the app:
 
 - Never send netmd-js's `finalize()` USB reset. It throws away TOC changes the unit hasn't written yet.
 - Each track costs ~35–45 s of device-side latency on this portable, however short it is. The data transfer itself takes well under a second. Progress UI should show "waiting for device", not a stuck bar.

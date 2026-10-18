@@ -1,4 +1,9 @@
 .build/
 .swiftpm/
-*.xcodeproj/xcuserdata/
 .DS_Store
+# Generated: `make generate` / `make js`
+*.xcodeproj
+App/Info.plist
+JS/node_modules/
+Sources/NetMDKit/Resources/netmd-bundle.js
+Sources/NetMDKit/Resources/assembler.wasm

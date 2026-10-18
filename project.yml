@@ -1,0 +1,45 @@
+# XcodeGen project. The .xcodeproj is generated, never committed: run `make generate`.
+name: MiniDisc
+
+options:
+  bundleIdPrefix: au.charlesmartin
+  deploymentTarget:
+    macOS: "14.0"
+  minimumXcodeGenVersion: "2.42.0"
+
+packages:
+  SwiftMiniDisc:
+    path: .
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    DEVELOPMENT_TEAM: EDH387FRHA
+    CODE_SIGN_STYLE: Automatic
+
+targets:
+  MiniDisc:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+        excludes: [MiniDisc.entitlements]
+    dependencies:
+      - package: SwiftMiniDisc
+        products: [ATRACKit, NetMDKit]
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: MiniDisc
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.music
+        NSHumanReadableCopyright: "MIT (own code); distributed as GPL-2.0 with netmd-js. See Acknowledgements."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: au.charlesmartin.swift-minidisc
+        GENERATE_INFOPLIST_FILE: NO
+        # Not sandboxed (Developer ID, not App Store). allow-jit: JavaScriptCore is
+        # interpreter-only without it, ~30x slower upload encryption (docs/FIELD-NOTES.md).
+        CODE_SIGN_ENTITLEMENTS: App/MiniDisc.entitlements
+        ENABLE_HARDENED_RUNTIME: YES

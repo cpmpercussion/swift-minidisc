@@ -45,6 +45,10 @@ Capping netmd-js's reply poll interval at 100 ms didn't speed things up (52 s ag
 
 netmd-js's `MDTrack` takes the ATRAC3 frames with no container. `.at3`/RIFF and OMA headers have to be stripped. netmd-js's README says this, but it's easy to miss. netmd-js's `FrameSize` for LP2 is 192 bytes, while an LP2 stereo frame is 384 bytes; it pads the data to a multiple of 192, so whole 384-byte frames are fine. ATRACKit's streaming encoder outputs raw frames directly.
 
+### An empty unit rejects TOC reads
+
+*Observed.* With no disc in the N910, `listContent` fails with `Rejected - 0a1806 02201801…`. That's the disc-title read (descriptor `1801`), the first query it makes. Check `getDeviceStatus(...).discPresent` first and show "insert a disc" instead of an error.
+
 ### Shift-JIS titles: half-width and full-width
 
 Japanese-market discs carry both a half-width title (ASCII and half-width katakana, e.g. `ﾀｲﾑ ﾘﾐｯﾄ`) and a full-width title (`タイム・リミット`). `listContent` returns both (`title`, `fullWidthTitle`). The app should show the full-width title when there is one.

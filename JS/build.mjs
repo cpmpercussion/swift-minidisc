@@ -1,16 +1,17 @@
 // Bundles netmd-js + netmd-exploits into one classic script for JavaScriptCore.
-// Output: Sources/NetMDJSC/Resources/{netmd-bundle.js,assembler.wasm}; the bundle exposes globalThis.NetMDBundle.
+// Output: Sources/NetMDKit/Resources/{netmd-bundle.js,assembler.wasm}; the bundle exposes globalThis.NetMDBundle.
 import { build } from 'esbuild';
 import { copyFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const shim = (name) => join(root, 'js', 'shims', name);
+const here = dirname(fileURLToPath(import.meta.url));
+const out = join(here, '..', 'Sources', 'NetMDKit', 'Resources');
+const shim = (name) => join(here, 'shims', name);
 
 await build({
-    entryPoints: [join(root, 'js', 'entry.js')],
-    outfile: join(root, 'Sources', 'NetMDJSC', 'Resources', 'netmd-bundle.js'),
+    entryPoints: [join(here, 'entry.js')],
+    outfile: join(out, 'netmd-bundle.js'),
     bundle: true,
     format: 'iife',
     platform: 'browser',
@@ -27,4 +28,4 @@ await build({
     logLevel: 'info',
 });
 
-copyFileSync(join(root, 'node_modules', 'netmd-exploits', 'assembler.wasm'), join(root, 'Sources', 'NetMDJSC', 'Resources', 'assembler.wasm'));
+copyFileSync(join(here, 'node_modules', 'netmd-exploits', 'assembler.wasm'), join(out, 'assembler.wasm'));
