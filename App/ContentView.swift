@@ -135,6 +135,7 @@ private struct BurnQueue: View {
                 }
                 .pickerStyle(.segmented)
                 .fixedSize()
+                .disabled(store.isBusy)
                 Text(capacity).font(.caption).foregroundStyle(fits ? Color.secondary : Color.red)
                 Spacer()
                 Button("Clear") { store.queue.removeAll() }.disabled(store.queue.isEmpty || store.isBusy)
@@ -163,11 +164,13 @@ private struct StatusView: View {
     let store: DiscStore
 
     var body: some View {
+        // No indeterminate spinners: animating one in the toolbar re-lays-out the whole
+        // window every frame (FIELD-NOTES).
         switch store.phase {
         case .idle: EmptyView()
-        case .working(let label): ProgressView { Text(label) }.controlSize(.small)
+        case .working(let label): Label(label, systemImage: "hourglass").labelStyle(.titleAndIcon)
         case let .uploading(n, count, fraction): ProgressView("Sending track \(n) of \(count)", value: fraction).frame(width: 180)
-        case let .saving(n, count): ProgressView { Text("Unit is saving track \(n) of \(count)…") }.controlSize(.small)
+        case let .saving(n, count): Label("Unit is saving track \(n) of \(count)…", systemImage: "opticaldisc").labelStyle(.titleAndIcon)
         }
     }
 }

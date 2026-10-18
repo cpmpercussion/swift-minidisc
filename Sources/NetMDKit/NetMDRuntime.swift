@@ -3,18 +3,21 @@ import JavaScriptCore
 
 /// Hosts the bundled netmd-js + netmd-exploits in a JSContext.
 ///
-/// All JavaScript runs on the main thread. USB I/O runs on `usbQueue` and settles
-/// its Promise back on the main thread, so netmd-js sees an ordinary async WebUSB.
+/// All JavaScript runs on the thread that creates the runtime, which must run its run loop
+/// (JSC finishes WebAssembly loading through it). USB I/O runs on `usbQueue` and settles its
+/// Promise back on that thread, so netmd-js sees an ordinary async WebUSB. The app gives the
+/// runtime a thread of its own, so UI work can't stall a transfer (FIELD-NOTES).
 public final class NetMDRuntime {
     public let context: JSContext
+    private let runLoop: CFRunLoop
     private let usbQueue = DispatchQueue(label: "NetMDKit.usb")
     private var handles: [UInt64: USBDeviceHandle] = [:] // touched only on usbQueue
-    private var timers: [Int: DispatchWorkItem] = [:]
+    private var timers: [Int: Timer] = [:]
     private var nextTimerID = 1
     public var log: (String) -> Void = { print($0) }
 
     public init() throws {
-        dispatchPrecondition(condition: .onQueue(.main))
+        runLoop = CFRunLoopGetCurrent()
         context = JSContext()!
         context.name = "netmd-js"
         context.exceptionHandler = { [weak self] _, exception in
@@ -89,17 +92,17 @@ public final class NetMDRuntime {
             let extra = Array(((JSContext.currentArguments() as? [JSValue]) ?? []).dropFirst(2))
             let id = self.nextTimerID
             self.nextTimerID += 1
-            let item = DispatchWorkItem { [weak self] in
+            let ms = delay.isNumber ? max(0, delay.toDouble()) : 0
+            let timer = Timer(timeInterval: ms / 1000, repeats: false) { [weak self] _ in
                 self?.timers.removeValue(forKey: id)
                 callback.call(withArguments: extra)
             }
-            self.timers[id] = item
-            let ms = delay.isNumber ? max(0, delay.toDouble()) : 0
-            DispatchQueue.main.asyncAfter(deadline: .now() + ms / 1000, execute: item)
+            self.timers[id] = timer
+            CFRunLoopAddTimer(self.runLoop, timer, .commonModes)
             return id
         }
         let clearTimeout: @convention(block) (Int) -> Void = { [weak self] id in
-            self?.timers.removeValue(forKey: id)?.cancel()
+            self?.timers.removeValue(forKey: id)?.invalidate()
         }
         context.setObject(setTimeout, forKeyedSubscript: "setTimeout" as NSString)
         context.setObject(clearTimeout, forKeyedSubscript: "clearTimeout" as NSString)
@@ -205,12 +208,19 @@ public final class NetMDRuntime {
         return handle
     }
 
-    /// Runs `work` on the USB queue against the device's handle, then settles a JS Promise on main.
+    /// Runs `block` on the runtime's thread, the only one that may touch `context`.
+    public func perform(_ block: @escaping () -> Void) {
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.commonModes.rawValue, block)
+        CFRunLoopWakeUp(runLoop)
+    }
+
+    /// Runs `work` on the USB queue against the device's handle, then settles a JS Promise
+    /// on the runtime's thread.
     private func promise(deviceID: String, work: @escaping (USBDeviceHandle?) throws -> Any?) -> JSValue {
         JSValue(newPromiseIn: context) { [unowned self] resolve, reject in
             self.usbQueue.async { [unowned self] in
                 let outcome = Result { try work(UInt64(deviceID).flatMap { self.handles[$0] }) }
-                DispatchQueue.main.async { [unowned self] in
+                self.perform { [unowned self] in
                     switch outcome {
                     case .success(let value as Data):
                         resolve?.call(withArguments: [self.makeUint8Array(value)])

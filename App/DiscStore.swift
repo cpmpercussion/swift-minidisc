@@ -37,7 +37,7 @@ final class DiscStore {
 
     func connect() async {
         await run("Looking for a NetMD device…") {
-            if client == nil { client = try NetMDClient() }
+            if client == nil { client = try await NetMDClient() }
             deviceName = try await client!.connect()
             guard deviceName != nil else { return }
             deviceCode = try? await client!.deviceCode()
@@ -94,10 +94,13 @@ final class DiscStore {
                 }
             }.value
             let tracks = zip(files, data).map { UploadTrack(title: $0.title, format: format, data: $1) }
-            try await client.upload(tracks) { [weak self] n, sent, total in
+            let count = tracks.count
+            try await client.upload(tracks) { n, sent, total in
                 // Once a track's data is all sent, the unit spends a while saving it.
-                self?.phase = sent < total ? .uploading(track: n + 1, of: tracks.count, fraction: Double(sent) / Double(total))
-                                           : .saving(track: n + 1, of: tracks.count)
+                let phase: Phase = sent < total ? .uploading(track: n + 1, of: count, fraction: Double(sent) / Double(total))
+                                                : .saving(track: n + 1, of: count)
+                // Reported on the client's JS thread; main.async keeps the updates in order.
+                DispatchQueue.main.async { [weak self] in self?.phase = phase }
             }
             queue.removeAll()
             disc = try await client.disc()

@@ -86,6 +86,28 @@ A command-line host must call `RunLoop.main.run()`; with `dispatchMain()` it han
 
 *Observed.* The app crashed with an `EnvironmentValues.subscript` assertion when an accessibility query (`entire contents` of the window via System Events) forced layout of a toolbar item that read `@Environment(DiscStore.self)`. Toolbar content is hosted outside the window's view tree. Fixing only the toolbar wasn't enough: the same query crashed it again in another view (table cells are hosted too). The app now passes the store to every view explicitly and doesn't use `@Environment` for it.
 
+### A busy main thread throttles the upload
+
+*Observed 2026-10-18, MZ-N910, first app burn.* Two LP2 tracks (about 40 minutes of audio) went over slower than real time. The same netmd-js code had sent a 42-minute LP2 album in 124 s from `netmd-cli`. The app sat at about 90–95% CPU. Two 3-second `sample`s showed the main thread re-laying-out the window over and over: `NSWindow layoutIfNeeded` → SwiftUI root geometry → sizing the queue's segmented `Picker` (`SystemSegmentedControl`) through a nested hosting graph, with much of the time in `ObservationTracking.cancel`. Only 6–11 of about 2,200 samples were USB promise callbacks. Hiding the app didn't help (still about 90%).
+
+*Why:* all JavaScript runs on the main thread (`NetMDRuntime`), and every USB completion and `setTimeout` settles there. Each step of the transfer waits behind a layout pass. *Hypothesis:* the indeterminate spinner in the toolbar drives the per-frame window layout; the segmented picker makes each pass expensive.
+
+**For the app:** don't animate anything during a transfer that forces window layout, and keep the transfer off the UI's thread. The sturdy fix is running the JSContext on its own thread, so nothing the UI does can stall the device.
+
+*Fixed.* `NetMDClient` now runs the JSContext on its own thread with its own run loop, and the toolbar shows static labels instead of spinners. Idle CPU went from about 90% to 0%. Side A (about 20 minutes, 24-bit) burned as LP2 in about 1:50 from clicking Burn: about 40 s encoding (Debug build), about 35 s sending, about 30 s saving on the unit.
+
+### Quitting mid-transfer leaves the unit stuck in PC→MD
+
+*Observed, MZ-N910.* After the app was quit during a slow transfer, the REC light kept blinking and the unit ignored stop and eject. Unplugging USB ended it: "PC→MD" for a moment, then "TOC EDIT" for a while. The disc kept its original 13 tracks plus the first uploaded track (Side B, complete), which had finished saving before the quit; the track being sent was lost. Afterwards the unit didn't enumerate on USB until it had been power-cycled and replugged.
+
+**For the app:** a Cancel that ends the session properly, and a warning before quitting during a transfer. Tell the user that unplugging is the way out if the app goes away mid-transfer.
+
+### Bulk writes must not time out
+
+*Observed.* The next burn, onto the same disc straight after that recovery, failed on its first bulk write: `endpoint 0x02: status 0xe00002d6 (timeout): 128 bytes transferred` after our 5 s IOUSBHost timeout. Nothing was written; the disc was unchanged. WebUSB has no transfer timeout, so netmd-js never expects one. *Hypothesis:* the unit was still busy after the aborted session and held off the data for more than 5 s.
+
+**For the app:** bulk OUT transfers now have no timeout (`USBDeviceHandle.bulkOutTimeout = 0`). Unplugging still ends a hung transfer.
+
 ## Audio pipeline
 
 ### iCloud Drive files may be placeholders

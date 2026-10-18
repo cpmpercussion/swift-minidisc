@@ -45,71 +45,116 @@ public struct NetMDError: Error, CustomStringConvertible {
     public let description: String
 }
 
-/// A NetMD device, driven by netmd-js in JavaScriptCore. Main-actor only, like the JSContext.
-@MainActor
-public final class NetMDClient {
-    private let runtime: NetMDRuntime
-    private var host: JSValue { runtime.context.objectForKeyedSubscript("netmdHost") }
+/// A NetMD device, driven by netmd-js in JavaScriptCore on a thread of its own. The JSContext
+/// is only touched there, so a busy main thread can't stall a transfer (FIELD-NOTES).
+public final class NetMDClient: @unchecked Sendable {
+    private let thread = JSThread()
+    private var runtime: NetMDRuntime!   // touched only on `thread`
 
-    public init() throws {
-        runtime = try NetMDRuntime()
+    public init() async throws {
+        runtime = try await withCheckedThrowingContinuation { continuation in
+            thread.perform { continuation.resume(with: Result { try NetMDRuntime() }) }
+        }
     }
 
     /// Opens the first attached NetMD device. Returns its name, or nil if none is attached.
     public func connect() async throws -> String? {
-        let name = try await call("connect")
-        return name.isNull ? nil : name.toString()
+        try await call("connect") { $0.isNull ? nil : $0.toString() }
     }
 
     /// The inserted disc, or nil if the unit is empty.
     public func disc() async throws -> Disc? {
-        let d = try await call("disc")
-        if d.isNull { return nil }
-        let frames = { (v: JSValue) in v.toDouble() / 512 }   // netmd-js counts 1/512 s frames
-        let tracks = (d.forProperty("tracks").toArray() ?? []).indices.map { i in
-            let t = d.forProperty("tracks").atIndex(i)!
-            return Track(index: Int(t.forProperty("index").toInt32()), title: t.forProperty("title").toString(),
-                         fullWidthTitle: t.forProperty("fullWidthTitle").toString(), encoding: t.forProperty("encoding").toString(),
-                         duration: frames(t.forProperty("frames")), group: t.forProperty("group").toString())
+        try await call("disc") { d in
+            if d.isNull { return nil }
+            let frames = { (v: JSValue) in v.toDouble() / 512 }   // netmd-js counts 1/512 s frames
+            let tracks = (d.forProperty("tracks").toArray() ?? []).indices.map { i in
+                let t = d.forProperty("tracks").atIndex(i)!
+                return Track(index: Int(t.forProperty("index").toInt32()), title: t.forProperty("title").toString(),
+                             fullWidthTitle: t.forProperty("fullWidthTitle").toString(), encoding: t.forProperty("encoding").toString(),
+                             duration: frames(t.forProperty("frames")), group: t.forProperty("group").toString())
+            }
+            return Disc(title: d.forProperty("title").toString(), fullWidthTitle: d.forProperty("fullWidthTitle").toString(),
+                        tracks: tracks, remaining: frames(d.forProperty("left")), total: frames(d.forProperty("total")),
+                        isWritable: d.forProperty("writable").toBool(), hasGroups: d.forProperty("hasGroups").toBool())
         }
-        return Disc(title: d.forProperty("title").toString(), fullWidthTitle: d.forProperty("fullWidthTitle").toString(),
-                    tracks: tracks, remaining: frames(d.forProperty("left")), total: frames(d.forProperty("total")),
-                    isWritable: d.forProperty("writable").toBool(), hasGroups: d.forProperty("hasGroups").toBool())
     }
 
     /// SoC and firmware, e.g. "S1.400": what netmd-exploits keys its features on.
-    public func deviceCode() async throws -> String { try await call("deviceCode").toString() }
+    public func deviceCode() async throws -> String { try await call("deviceCode") { $0.toString() } }
 
-    public func renameDisc(_ title: String) async throws { _ = try await call("renameDisc", title) }
-    public func renameTrack(_ index: Int, to title: String) async throws { _ = try await call("renameTrack", index, title) }
-    public func eraseTrack(_ index: Int) async throws { _ = try await call("eraseTrack", index) }
-    public func close() async { _ = try? await call("close") }
+    public func renameDisc(_ title: String) async throws { try await send("renameDisc", title) }
+    public func renameTrack(_ index: Int, to title: String) async throws { try await send("renameTrack", index, title) }
+    public func eraseTrack(_ index: Int) async throws { try await send("eraseTrack", index) }
+    public func close() async { try? await send("close") }
 
     /// Uploads tracks in one session. `progress(track, sent, total)` reports bytes sent; once a
     /// track's bytes are all sent the unit spends a while saving it before the next one starts.
-    public func upload(_ tracks: [UploadTrack], progress: @escaping (Int, Int, Int) -> Void) async throws {
-        let items = JSValue(newArrayIn: runtime.context)!
-        for (n, t) in tracks.enumerated() {
-            let item = JSValue(newObjectIn: runtime.context)!
-            item.setObject(t.title, forKeyedSubscript: "title" as NSString)
-            item.setObject(t.format.rawValue, forKeyedSubscript: "format" as NSString)
-            item.setObject(runtime.makeUint8Array(t.data), forKeyedSubscript: "data" as NSString)
-            items.setObject(item, atIndexedSubscript: n)
-        }
+    /// `progress` is called on the client's thread.
+    public func upload(_ tracks: [UploadTrack], progress: @escaping @Sendable (Int, Int, Int) -> Void) async throws {
         let report: @convention(block) (Int, Int, Int) -> Void = { progress($0, $1, $2) }
-        _ = try await call("upload", items, JSValue(object: report, in: runtime.context)!)
+        try await evaluate("upload", makeArgs: { runtime in
+            let items = JSValue(newArrayIn: runtime.context)!
+            for (n, t) in tracks.enumerated() {
+                let item = JSValue(newObjectIn: runtime.context)!
+                item.setObject(t.title, forKeyedSubscript: "title" as NSString)
+                item.setObject(t.format.rawValue, forKeyedSubscript: "format" as NSString)
+                item.setObject(runtime.makeUint8Array(t.data), forKeyedSubscript: "data" as NSString)
+                items.setObject(item, atIndexedSubscript: n)
+            }
+            return [items, JSValue(object: report, in: runtime.context)!]
+        }) { _ in () }
     }
 
-    /// Calls `netmdHost[name](...args)` and awaits the Promise it returns.
-    private func call(_ name: String, _ args: Any...) async throws -> JSValue {
-        let context = runtime.context
-        return try await withCheckedThrowingContinuation { continuation in
-            let resolve: @convention(block) (JSValue) -> Void = { continuation.resume(returning: $0) }
-            let reject: @convention(block) (JSValue) -> Void = { error in
-                continuation.resume(throwing: NetMDError(description: error.forProperty("message")?.toString() ?? error.toString()))
+    private func send(_ name: String, _ args: Any...) async throws {
+        try await evaluate(name, makeArgs: { _ in args }) { _ in () }
+    }
+
+    private func call<T>(_ name: String, _ args: Any..., result: @escaping (JSValue) -> T) async throws -> T {
+        try await evaluate(name, makeArgs: { _ in args }, result: result)
+    }
+
+    /// Calls `netmdHost[name](...args)` on the JS thread, awaits the Promise it returns, and
+    /// converts the result there: JSValues never leave that thread.
+    private func evaluate<T>(_ name: String, makeArgs: @escaping (NetMDRuntime) -> [Any], result: @escaping (JSValue) -> T) async throws -> T {
+        try await withCheckedThrowingContinuation { continuation in
+            thread.perform { [self] in
+                let context = runtime.context
+                let resolve: @convention(block) (JSValue) -> Void = { continuation.resume(returning: result($0)) }
+                let reject: @convention(block) (JSValue) -> Void = { error in
+                    continuation.resume(throwing: NetMDError(description: error.forProperty("message")?.toString() ?? error.toString()))
+                }
+                let host = context.objectForKeyedSubscript("netmdHost")!
+                let promise = host.invokeMethod(name, withArguments: makeArgs(runtime))!
+                promise.invokeMethod("then", withArguments: [JSValue(object: resolve, in: context)!, JSValue(object: reject, in: context)!])
             }
-            let promise = host.invokeMethod(name, withArguments: args)!
-            promise.invokeMethod("then", withArguments: [JSValue(object: resolve, in: context)!, JSValue(object: reject, in: context)!])
         }
+    }
+}
+
+/// A thread that runs its run loop forever, for the JSContext and the timers and USB
+/// completions netmd-js waits on.
+private final class JSThread: Thread {
+    private var runLoop: CFRunLoop?
+    private let ready = DispatchSemaphore(value: 0)
+
+    override init() {
+        super.init()
+        name = "NetMDKit.js"
+        qualityOfService = .userInitiated
+        start()
+        ready.wait()
+    }
+
+    override func main() {
+        runLoop = CFRunLoopGetCurrent()
+        // A run loop with no sources returns at once; a port keeps this one alive.
+        RunLoop.current.add(NSMachPort(), forMode: .default)
+        ready.signal()
+        while true { RunLoop.current.run(mode: .default, before: .distantFuture) }
+    }
+
+    func perform(_ block: @escaping () -> Void) {
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.commonModes.rawValue, block)
+        CFRunLoopWakeUp(runLoop)
     }
 }

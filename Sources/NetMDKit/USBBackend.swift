@@ -81,6 +81,9 @@ public final class USBDeviceHandle: @unchecked Sendable {
     private var pipes: [Int: IOUSBHostPipe] = [:]
 
     static let timeout: TimeInterval = 5
+    /// WebUSB never times out a transfer, and netmd-js relies on that: a unit may hold off
+    /// bulk data for well over 5 s before it starts recording (FIELD-NOTES). 0 means no timeout.
+    static let bulkOutTimeout: TimeInterval = 0
     static let trace = ProcessInfo.processInfo.environment["NETMD_TRACE"] != nil
 
     public init(info: USBDeviceInfo) throws {
@@ -170,7 +173,7 @@ public final class USBDeviceHandle: @unchecked Sendable {
             if Self.trace { print(String(format: "[usb] out 0x%02x %d bytes %.1f ms", endpointAddress, data.count, Date().timeIntervalSince(started) * 1000)) }
         }
         do {
-            try pipe(endpointAddress).__sendIORequest(with: NSMutableData(data: data), bytesTransferred: &transferred, completionTimeout: Self.timeout)
+            try pipe(endpointAddress).__sendIORequest(with: NSMutableData(data: data), bytesTransferred: &transferred, completionTimeout: Self.bulkOutTimeout)
         } catch {
             throw USBError.ioKit("transferOut(0x\(String(endpointAddress, radix: 16)))", error)
         }
