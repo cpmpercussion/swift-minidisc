@@ -1,0 +1,121 @@
+{
+  "fill-specializations": [
+    {
+      "value": {
+        "linear-gradient": [
+          "srgb:0.02353,0.07059,0.22745,1.00000",
+          "srgb:0.04314,0.11765,0.35294,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      }
+    },
+    {
+      "appearance": "dark",
+      "value": {
+        "linear-gradient": [
+          "srgb:0.01176,0.03922,0.13333,1.00000",
+          "srgb:0.03137,0.08627,0.28235,1.00000"
+        ],
+        "orientation": {
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "Waveform",
+      "layers": [
+        {
+          "image-name": "wave.svg",
+          "name": "wave",
+          "glass": false
+        },
+        {
+          "image-name": "wave-glow.png",
+          "name": "wave-glow",
+          "glass": false
+        }
+      ],
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.6
+      },
+      "specular": false
+    },
+    {
+      "name": "Label",
+      "layers": [
+        {
+          "image-name": "label.svg",
+          "name": "label",
+          "glass": false
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.3
+      }
+    },
+    {
+      "name": "Shell",
+      "layers": [
+        {
+          "image-name": "shell-detail.svg",
+          "name": "shell-detail",
+          "glass": false
+        },
+        {
+          "image-name": "shell-body.svg",
+          "name": "shell-body",
+          "glass": true,
+          "opacity": 0.4
+        }
+      ],
+      "translucency": {
+        "enabled": true,
+        "value": 0.6
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
+      },
+      "specular": true
+    },
+    {
+      "name": "Disc",
+      "layers": [
+        {
+          "image-name": "disc.svg",
+          "name": "disc",
+          "glass": false
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.3
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  }
+}

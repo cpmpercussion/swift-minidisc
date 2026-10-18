@@ -1,0 +1,20 @@
+{
+  "_comment": "Sampled from photographs of the author's own discs (ref/): Sony Color Collection 74 in blue and red, and a grey 60. Values are the dominant colours after quantising the plastic in each photo, so they are the discs under daylight, not catalogue colours. Blue is the primary, red the accent.",
+  "colors": [
+    { "name": "Collection Blue",  "hex": "#0259f9", "role": "primary: the blue disc's plastic in full light", "source": "ref/blue-front.jpg" },
+    { "name": "Deep Blue",        "hex": "#0137e0", "role": "blue in shadow, inner disc", "source": "ref/blue-front.jpg" },
+    { "name": "Night Blue",       "hex": "#0b1e5a", "role": "ground, darkest blue through the shell", "source": "ref/blue-front.jpg" },
+    { "name": "Glint Blue",       "hex": "#4e91de", "role": "highlight on the blue shell", "source": "ref/blue-front.jpg" },
+    { "name": "Collection Red",   "hex": "#c7242c", "role": "accent: the red disc's plastic in full light", "source": "ref/red-front.jpg" },
+    { "name": "Deep Red",         "hex": "#a81d1c", "role": "red in shadow", "source": "ref/red-front.jpg" },
+    { "name": "Shell Black",      "hex": "#0c152e", "role": "ink: the blue-black of the shell rim and hub", "source": "ref/blue-front.jpg" },
+    { "name": "Cartridge Grey",   "hex": "#444d5a", "role": "neutral: the grey 60 shell", "source": "ref/grey-angle.jpg" },
+    { "name": "Label Silver",     "hex": "#b3b5bc", "role": "light neutral: label stock, shutter metal", "source": "ref/grey-angle.jpg" }
+  ],
+  "schemes": {
+    "collection": ["Collection Blue", "Night Blue", "Collection Red", "Label Silver"],
+    "blue":       ["Collection Blue", "Deep Blue", "Night Blue", "Glint Blue", "Label Silver"],
+    "flat":       ["Collection Blue", "Collection Red", "Shell Black", "Label Silver"],
+    "_note": "Scheme names are used by prompts.json and by --remap."
+  }
+}

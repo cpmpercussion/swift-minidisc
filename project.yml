@@ -49,3 +49,5 @@ targets:
         # interpreter-only without it, ~30x slower upload encryption (docs/FIELD-NOTES.md).
         CODE_SIGN_ENTITLEMENTS: App/MiniDisc.entitlements
         ENABLE_HARDENED_RUNTIME: YES
+        # App/AppIcon.icon is an Icon Composer document, written by Design/icon/build.py.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

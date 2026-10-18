@@ -1,0 +1,117 @@
+{
+  "_comment": "Edit here, rerun explore.py, compare the contact sheet. {subject} and {style} are spliced in mid-sentence, so keep them lower-case phrases with no full stop. {palette} is filled from the scheme named in each variant. Each variant names one of three styles (the directions under test); within a style, change one thing per variant so a run isolates its effect. Variants with an image use the author's own photographs in ref/, so anything derived from them is ours to ship.",
+  "styles": {
+    "clear": "late-1990s translucent coloured plastic product, like an iMac G3 or a see-through Game Boy Color: glossy candy-coloured shell you can see into, internal parts visible and tinted by the plastic, soft internal glow, clean studio lighting, crisp simple forms, Y2K consumer electronics, no text, no lettering, no logos, no numbers",
+    "techno": "1990s techno graphic design in the manner of a Designers Republic record sleeve or a Japanese electronics catalogue: flat spot colours, hard-edged geometric vector shapes, thin technical rules, registration crosshairs, a precise sense of a diagram, bold and minimal, no gradients, no photorealism, no text, no lettering, no logos, no numbers",
+    "chrome": "Y2K futurism: liquid chrome and iridescent plastic, soft blobby rounded forms, glossy reflections of a pale sky, a small lens flare, a 2000-era 3D render made for a music player, no text, no lettering, no logos, no numbers"
+  },
+  "subject": "a MiniDisc: a small nearly square plastic cartridge with rounded corners, with a round recordable disc and a dark centre hub visible through the shell, and a flat sliding shutter along one edge",
+  "negative": "text, letters, numbers, logo, Sony, watermark, signature, floppy disk, 3.5 inch diskette, save icon, CD, DVD, compact disc case, cassette, hands, wood, table, clutter",
+  "variants": [
+    {
+      "id": "clear-portrait",
+      "style": "clear",
+      "scheme": "blue",
+      "prompt": "Product shot of {subject}, its whole shell made of translucent collection blue plastic, the disc inside glowing a brighter blue, turned slightly in three-quarter view and floating on a flat deep night-blue ground. Composed as a square app icon: one object, centred, generous margins, readable at thumbnail size. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "clear-pair",
+      "style": "clear",
+      "scheme": "collection",
+      "prompt": "Product shot of {subject}, its shell made of translucent collection blue plastic, with a second identical cartridge in translucent red plastic just behind it and offset to one side, the two overlapping so the colours mix where they cross, on a flat deep night-blue ground. Composed as a square app icon, readable at thumbnail size. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "clear-waveform",
+      "style": "clear",
+      "scheme": "collection",
+      "prompt": "Product shot of {subject}, its whole shell made of translucent collection blue plastic, front-on, with a single glowing red audio waveform line flowing in from the left and passing into the cartridge through its edge, on a flat deep night-blue ground. Composed as a square app icon: one object, centred, generous margins. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "kontext-clear-blue",
+      "style": "clear",
+      "scheme": "blue",
+      "image": "ref/blue-front.jpg",
+      "prompt": "Turn this photograph into a square app icon. Keep the translucent blue cartridge and the disc and hub seen through it, but remove every word, logo, label and printed mark, and remove the wooden table: place the cartridge, centred and slightly smaller, on a flat deep night-blue ground. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "kontext-clear-angle",
+      "style": "clear",
+      "scheme": "collection",
+      "image": "ref/blue-angle.jpg",
+      "prompt": "Turn this photograph into a square app icon. Keep the translucent blue cartridge at its angle, but remove every word, logo, label and printed mark, remove the wooden table, and stand it on a flat deep night-blue ground with a soft red glow behind it. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "techno-disc",
+      "style": "techno",
+      "scheme": "flat",
+      "prompt": "Graphic of {subject}, front-on, reduced to a few flat shapes: a square shell in shell black, a large circle of collection blue inside it, a small black hub ring at the centre, a registration crosshair over one corner. Composed as a square app icon, one bold shape, readable at thumbnail size. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "techno-waveform",
+      "style": "techno",
+      "scheme": "flat",
+      "prompt": "Graphic of {subject}, front-on, reduced to a few flat shapes: a square shell, a large circle of collection blue inside it, a small hub ring at the centre; a sharp red audio waveform, like a seismograph trace, runs horizontally across the whole icon and becomes the edge of the disc where it enters. Composed as a square app icon, readable at thumbnail size. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "kontext-techno-blue",
+      "style": "techno",
+      "scheme": "flat",
+      "image": "ref/blue-front.jpg",
+      "prompt": "Redraw this photograph as a flat graphic, square app icon. Keep the square cartridge, the circular disc and the centre hub, as hard-edged flat shapes; remove every word, logo, label and printed mark and the wooden table; add a single registration crosshair. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "chrome-disc",
+      "style": "chrome",
+      "scheme": "blue",
+      "prompt": "3D render of {subject}, its shell in liquid chrome with rounded softened edges, the disc inside an iridescent collection blue, floating at a slight tilt on a flat deep night-blue ground. Composed as a square app icon: one object, centred, generous margins. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "chrome-blob",
+      "style": "chrome",
+      "scheme": "collection",
+      "prompt": "3D render of {subject}, melted into a soft rounded blobject like a bar of soap, in glossy translucent collection blue plastic with a red glint where the light catches its edge, floating on a flat deep night-blue ground. Composed as a square app icon: one object, centred, generous margins. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-photo-clear",
+      "style": "clear",
+      "scheme": "collection",
+      "image": "ref/blue-front.jpg",
+      "prompt": "Turn this photograph into a square app icon. Keep the cartridge's exact shape and the disc and hub seen through it, rendered as glowing translucent blue plastic. Cover the black label, the logo square and every printed word or mark with plain blank blue plastic. Remove the wooden table: place the cartridge, centred and a little smaller, on a flat deep night-blue ground. Add a single bright red neon audio waveform, a dense spiky line like the one on an oscilloscope, flowing in from the left edge of the icon and running into the cartridge through its left side. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-photo-flat",
+      "style": "techno",
+      "scheme": "flat",
+      "image": "ref/blue-front.jpg",
+      "prompt": "Redraw this photograph as a flat graphic square app icon. Keep the cartridge's exact proportions and rounded corners, the full circle of the disc and the centre hub, as hard-edged flat shapes; the disc is a complete circle with nothing covering it. Remove every word, logo, label and printed mark and the wooden table, and use a flat deep night-blue ground. Add a single bright red neon audio waveform, a dense spiky line like the one on an oscilloscope, flowing in from the left edge of the icon and running into the cartridge through its left side. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-techno-62",
+      "style": "techno",
+      "scheme": "flat",
+      "image": "out/20261018-213447/kontext-techno-blue-19262.png",
+      "prompt": "Edit this graphic. Fill in the gap on the right of the blue disc so it is a complete circle around the hub. Remove the red and grey bars and the red dot. Replace the pale background with flat deep night blue. Add a single bright red neon audio waveform, a dense spiky line like the one on an oscilloscope, flowing in from the left edge of the icon and running into the cartridge through its left side. Keep everything else exactly as it is. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-techno-63",
+      "style": "techno",
+      "scheme": "flat",
+      "image": "out/20261018-213447/kontext-techno-blue-19263.png",
+      "prompt": "Edit this graphic. Remove the red rectangle so the blue disc is a complete circle around the hub. Replace the pale background with flat deep night blue. Add a single bright red neon audio waveform, a dense spiky line like the one on an oscilloscope, flowing in from the left edge of the icon and running into the cartridge through its left side. Keep the shell, disc, hub and crosshair exactly as they are. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-techno-glass",
+      "style": "clear",
+      "scheme": "collection",
+      "image": "out/20261018-213447/kontext-techno-blue-19263.png",
+      "prompt": "Re-render this flat graphic as a real object in glowing translucent blue plastic, keeping exactly its shapes and proportions: the square shell, the disc as a complete circle (remove the red rectangle), the hub. Drop the crosshair. Place it on a flat deep night-blue ground. Add a single bright red neon audio waveform, a dense spiky line like the one on an oscilloscope, flowing in from the left edge of the icon and running into the cartridge through its left side. Style: {style}. Palette, exactly and only: {palette}."
+    },
+    {
+      "id": "wave-fix-cartridge",
+      "style": "clear",
+      "scheme": "collection",
+      "image": "out/20261018-212742/clear-waveform-19263.png",
+      "prompt": "Keep the red waveform, the glow, the colours and the background exactly. Correct the blue cartridge into an accurate MiniDisc: a thin flat cartridge only a few millimetres thick, nearly square with small rounded corners, a large disc filling most of the shell seen through the translucent plastic, and a small hub at its centre. Remove the lens, the round holes and the word on it. Style: {style}. Palette, exactly and only: {palette}."
+    }
+  ]
+}

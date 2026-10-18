@@ -19,3 +19,7 @@ Not currently shipped, but part of the same ecosystem:
 Full licence texts will live in `ThirdParty/<project>/LICENSE` and ship inside the app bundle.
 
 If you contributed to one of these projects and should be named here, please open an issue.
+
+## App icon
+
+The icon is drawn from Charles Martin's own photographs of his MiniDiscs (a Sony Color Collection 74 in blue and red, and a grey 60). Concepts were generated with FLUX models on Replicate, and the final icon was rebuilt by hand as SVG layers for Icon Composer, with the cartridge measured from those photographs. It contains no Sony or MiniDisc marks. See `Design/IDENTITY.md` and `Design/icon/README.md`.

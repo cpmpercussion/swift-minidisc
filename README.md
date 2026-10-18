@@ -1,4 +1,6 @@
-# swift-minidisc
+<p align="center"><img src="docs/assets/icon-512.png" width="256" alt="The app icon: a translucent blue MiniDisc with a red waveform passing into it"></p>
+
+<h1 align="center">swift-minidisc</h1>
 
 A native macOS (SwiftUI) app for putting your existing audio files onto MiniDisc over NetMD.
 
