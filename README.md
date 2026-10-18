@@ -2,7 +2,7 @@
 
 A native macOS (SwiftUI) app for putting your existing audio files onto MiniDisc over NetMD.
 
-**Status:** idea / planning. Nothing works yet. See [docs/PLAN.md](docs/PLAN.md).
+**Status:** spikes done. Encoding, listing and gapless LP2 upload work on a real MZ-N910 from Swift; the app itself isn't built yet. See [docs/PLAN.md](docs/PLAN.md), [docs/SPIKES.md](docs/SPIKES.md), and [docs/FIELD-NOTES.md](docs/FIELD-NOTES.md) for what we've learned about running this stack natively and how the hardware behaves in practice.
 
 ## What this is (and isn't)
 
