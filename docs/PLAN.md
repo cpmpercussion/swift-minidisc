@@ -80,7 +80,7 @@ Decode with AVFoundation (`AVAudioFile` / `AVAudioConverter`) to 44.1 kHz stereo
 ## Distribution
 
 - Developer ID signed, hardened runtime, notarised, stapled `.dmg`, built by GitHub Actions on tagged releases.
-- Entitlements: USB device access. JIT probably isn't needed (USB speed is the bottleneck), so check whether JSC runs acceptably without `allow-jit`.
+- Entitlements: `com.apple.security.cs.allow-jit` is required. Without it, JavaScriptCore runs interpreter-only and netmd-js's WebAssembly encryption is about 30× slower: 31 s instead of 1 s per 4 MB, measured in spike B. Developer ID apps may use this entitlement. Add `com.apple.security.device.usb` if the app is ever sandboxed.
 - Each release states: "This binary is GPL-2.0. Source: <tag>." Third-party licence texts ship inside the app.
 - No Mac App Store build (see [LICENSING.md](LICENSING.md)).
 

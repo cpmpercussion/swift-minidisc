@@ -1,0 +1,5 @@
+node_modules/
+.build/
+.swiftpm/
+Sources/NetMDJSC/Resources/netmd-bundle.js
+Sources/NetMDJSC/Resources/assembler.wasm

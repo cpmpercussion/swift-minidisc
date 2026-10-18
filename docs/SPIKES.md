@@ -13,7 +13,13 @@ Still open: NetMD upload wants raw frames plus netmd-js's own wire format. Check
 
 ## B. netmd-js in JavaScriptCore
 
-See `Spikes/NetMDJSC/README.md`.
+**Passed, up to device discovery.** No deck was connected, so no USB traffic has run yet. Details are in `Spikes/NetMDJSC/README.md`. Run it with `Spikes/NetMDJSC/run.sh`.
+
+- netmd-js 4.4.1 and netmd-exploits 0.5.12, unmodified, are bundled by esbuild and load in a plain JSContext in about 150 ms. Both WebAssembly modules work: the DES known-answer test passes and Keystone loads.
+- netmd-js's device discovery goes through a small WebUSB shim to a Swift USB backend and reports "No NetMD device found" cleanly.
+- `allow-jit` is required: encrypting 4 MB takes 1.0 s with it and 31 s without.
+- WebAssembly loading finishes through the main run loop, so a command-line host must call `RunLoop.main.run()`. A SwiftUI app already runs it.
+- Main risk: whether we can claim the NetMD interface while macOS holds the device. Check this first on hardware.
 
 ## C. End-to-end LP2 upload
 

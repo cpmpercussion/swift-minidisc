@@ -1,0 +1,16 @@
+{
+  "name": "netmd-jsc-bundle",
+  "private": true,
+  "license": "GPL-2.0",
+  "description": "Bundles netmd-js + netmd-exploits for JavaScriptCore (spike)",
+  "scripts": {
+    "build": "node js/build.mjs"
+  },
+  "dependencies": {
+    "netmd-js": "4.4.1",
+    "netmd-exploits": "0.5.12"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0"
+  }
+}

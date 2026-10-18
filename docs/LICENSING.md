@@ -7,7 +7,7 @@ This isn't legal advice. It's our working position, written down so it can be ch
 | Layer | Licence |
 |---|---|
 | Source written for this repo | MIT ([LICENSE](../LICENSE)) |
-| netmd-js, netmd-exploits (bundled JS) | GPL-2.0 |
+| netmd-js, netmd-exploits (bundled JS), Keystone (`assembler.wasm`) | GPL-2.0 |
 | libatrac3 from kai-h/atrac-encoder (LP2/LP4 encoder) | MIT |
 | The distributed app (`.app` / `.dmg`) as a whole | **GPL-2.0** |
 
