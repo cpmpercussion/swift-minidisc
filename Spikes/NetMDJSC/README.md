@@ -106,3 +106,11 @@ The bundle comes from the npm packages pinned at the same versions as the `Third
 - **LP2 upload works end to end**: file → Core Audio → ATRACKit (libatrac3) → raw ATRAC3 frames (no `.at3` header) → netmd-js `MDTrack`/`download`. The track lists as LP2 with the expected length, and it's still there in a fresh session. Erasing works (`--erase-track N --expect-title T` refuses to erase if the title doesn't match).
 - **Don't call `netMd.finalize()`.** Its USB `reset()` makes the unit discard TOC changes it hasn't written to disc yet: the first upload vanished on the next connection. Web MiniDisc never calls it either. Release the interface and close.
 - **Upload time is fixed per-track latency on the device.** With `NETMD_TRACE=1`, the 66 KB of bulk data for a 4 s track went out in 0.36 s (about 1 ms per 1 KB packet), and packet encryption costs about 0.25 ms per KB. After that, the unit takes ~20–30 s to acknowledge the track and ~10–20 s to acknowledge the commit. Capping netmd-js's doubling reply poll at 100 ms (`--poll-cap-ms 100`) didn't help: 52 s versus 35–46 s with the default. So keep the upstream polling and design the UI around ~40 s per track on this unit. Still to measure: a full-length track, gapless album upload, and the other two portables.
+
+### Gapless album upload (MZ-N910, 2026-10-18)
+
+The 4-track, 42.1 min album was 24-bit ALAC from iCloud Drive; the files were placeholders and had to download first. It was decoded with dither to 16-bit and encoded gaplessly to LP2 with one `ATRAC3Encoder` in 18.8 s. Then the disc was erased (`--erase-disc 15`), the four tracks were uploaded in **one** `MDSession`, and the disc was titled with `renameDisc`. Total: **124 s, about 20× realtime**, at ~24 s per 10 MB track. Track lengths on the disc match the sources to within the encoder look-ahead.
+
+Per track, one shared session is much faster than a new session for each track (the ~40 s per track in the single-track tests). The app should always batch uploads into one session.
+
+Also fixed here: Shift-JIS title decoding. Two copies of the `buffer` package broke jconv's `instanceof` check, which garbled Japanese titles.

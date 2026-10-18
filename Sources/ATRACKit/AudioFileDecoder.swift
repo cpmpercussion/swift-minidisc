@@ -11,6 +11,9 @@ public enum AudioFileDecoder {
         guard let converter = AVAudioConverter(from: file.processingFormat, to: outputFormat) else {
             throw ATRAC3Error.codec("cannot convert from \(file.processingFormat)")
         }
+        // Dither when reducing 24-bit (or float) sources to 16-bit, rather than truncating.
+        // 16-bit sources pass through unchanged.
+        converter.dither = !isSixteenBit(file.fileFormat.streamDescription.pointee)
         let chunk: AVAudioFrameCount = 32_768
         let ratio = outputFormat.sampleRate / file.processingFormat.sampleRate
         let outCapacity = AVAudioFrameCount(Double(chunk) * ratio) + 1024
@@ -49,5 +52,18 @@ public enum AudioFileDecoder {
             if status == .endOfStream || status == .error { break }
         }
         return samples
+    }
+
+    private static func isSixteenBit(_ asbd: AudioStreamBasicDescription) -> Bool {
+        switch asbd.mFormatID {
+        case kAudioFormatLinearPCM:
+            return asbd.mFormatFlags & kAudioFormatFlagIsFloat == 0 && asbd.mBitsPerChannel <= 16
+        case kAudioFormatAppleLossless:
+            return asbd.mFormatFlags == kAppleLosslessFormatFlag_16BitSourceData
+        case kAudioFormatFLAC:
+            return asbd.mFormatFlags == kAppleLosslessFormatFlag_16BitSourceData
+        default:
+            return false  // lossy codecs decode to float
+        }
     }
 }
